@@ -21,9 +21,10 @@
           <p class="eyebrow">Snowfall Character Creator</p>
           <h1>Real Human Mesh Prototype</h1>
           <p>
-            Stage 1 loads a pinned CC0 MakeHuman base mesh and applies only the
-            SCC canonical height. Other body fields remain explicit calibration
-            work rather than hidden approximations.
+            The preview loads a pinned CC0 MakeHuman base mesh, preserves its source
+            vertex indices, and can apply a first real measurement target pair.
+            Target weights remain renderer-local until centimeter calibration
+            is implemented.
           </p>
         </div>
         <div class="header-actions">
@@ -54,9 +55,34 @@
           </label>
 
           <p class="note">
-            Shape prior is shown in the adapter plan but is not yet applied to
-            the mesh in Stage 1. No MakeHuman target morph is applied until the
-            calibration layer exists.
+            Shape prior remains renderer-local. It is not identity gender and
+            does not override explicit SCC measurements.
+          </p>
+
+          <hr />
+
+          <h2>Renderer calibration debug</h2>
+
+          <label class="control">
+            <span>Shoulder target weight (uncalibrated)</span>
+            <div class="control-row">
+              <input
+                id="shoulder-target-debug"
+                type="range"
+                min="-1"
+                max="1"
+                step="0.01"
+                value="0"
+                disabled
+              />
+              <output id="shoulder-target-value">0.00</output>
+            </div>
+          </label>
+
+          <p class="note">
+            This slider applies pinned MakeHuman CC0 shoulder-distance targets
+            directly to the renderer. It is deliberately not a centimeter
+            control and is never written into the SCC character document.
           </p>
 
           <h2>Asset status</h2>
