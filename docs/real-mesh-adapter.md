@@ -807,3 +807,16 @@ The engine slices explicit body triangles with a horizontal plane, assembles clo
 It intentionally does not yet choose the semantic chest/waist/hip plane.
 
 That field-specific logic is the next calibration stage.
+
+
+## Stage 8: chest reference-plane finder
+
+SCC now has field-specific experimental logic for choosing a chest measurement level from body geometry.
+
+See [Chest Reference Plane](chest-reference-plane.md).
+
+The MakeHuman adapter currently searches normalized body-height fractions `0.62..0.78` using 33 samples and chooses the valid central torso cross-section with the greatest perimeter.
+
+No MakeHuman measurement-index table is used.
+
+This stage measures geometry only. Renderer target calibration remains the next step.
