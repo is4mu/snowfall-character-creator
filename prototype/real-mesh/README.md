@@ -78,3 +78,19 @@ This ensures explicit SCC measurements remain authoritative.
 The implementation does not inspect `identity.gender`.
 
 Current status is prototype because the upstream macro assets also affect head/face geometry. The renderer prior must be visually audited before promotion.
+
+
+## Body surface only
+
+The upstream OBJ also contains helper and joint geometry.
+
+SCC preserves the complete source vertex address space for target compatibility, but renders and measures only the pinned `body` OBJ group.
+
+Pinned body contract:
+
+```text
+13380 source vertices
+26756 triangulated body triangles
+```
+
+Canonical height and shoulder calibration are normalized against body-only bounds. Helper geometry cannot affect anthropometry.
