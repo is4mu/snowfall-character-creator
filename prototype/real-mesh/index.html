@@ -104,6 +104,34 @@
 Loading experimental coupled calibration…
           </pre>
 
+          <h2>Reference-plane visual audit</h2>
+
+          <label class="toggle-control">
+            <input id="reference-plane-toggle" type="checkbox" checked />
+            <span>Show reference planes</span>
+          </label>
+
+          <div class="reference-plane-legend" aria-label="Reference plane legend">
+            <span>
+              <i class="legend-swatch chest"></i>
+              Chest
+            </span>
+            <span>
+              <i class="legend-swatch underbust"></i>
+              Underbust
+            </span>
+          </div>
+
+          <p class="note">
+            These overlays are renderer diagnostics only. When the experimental
+            underbust finder reports no stable landmark, no underbust plane is
+            drawn.
+          </p>
+
+          <pre id="reference-plane-status">
+Reference-plane audit requires a solved chest calibration…
+          </pre>
+
           <h2>Asset status</h2>
           <pre id="asset-status">Loading pinned CC0 base mesh…</pre>
         </aside>

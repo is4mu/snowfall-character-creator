@@ -142,6 +142,45 @@ select {
   color: #555;
 }
 
+.toggle-control {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.8rem 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.reference-plane-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.6rem 0;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.reference-plane-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 0.2rem;
+  border: 1px solid rgb(0 0 0 / 18%);
+}
+
+.legend-swatch.chest {
+  background: #2f80ed;
+}
+
+.legend-swatch.underbust {
+  background: #f2994a;
+}
+
 pre {
   overflow: auto;
   padding: 0.75rem;
