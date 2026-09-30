@@ -48,33 +48,51 @@ function makeBox(width, height, depth, material) {
   );
 }
 
-function makeTorsoGeometry(dimensions) {
+function makeTorsoGeometry(dimensions, surface) {
   const t = dimensions.torso;
   const shoulderHalfWidth = Math.max(
     t.chestHalfWidthM,
     dimensions.shoulderBreadthM / 2,
   );
 
+  const hipDepthM = t.hipHalfDepthM * 2 * 0.92;
+  const abdomenDepthM = t.abdomenHalfDepthM * 2;
+  const chestDepthM = t.chestHalfDepthM * 2;
+
   const rings = [
     {
       y: 0,
       halfWidth: t.hipHalfWidthM * 0.96,
       halfDepth: t.hipHalfDepthM * 0.92,
+      centerZ:
+        -hipDepthM * ((surface?.glutePosteriorShare ?? 0.5) - 0.5),
     },
     {
       y: t.heightM * 0.28,
       halfWidth: t.waistHalfWidthM,
       halfDepth: t.waistHalfDepthM,
+      centerZ: 0,
+    },
+    {
+      y: t.heightM * 0.48,
+      halfWidth: t.abdomenHalfWidthM,
+      halfDepth: t.abdomenHalfDepthM,
+      centerZ:
+        abdomenDepthM * ((surface?.abdomenAnteriorShare ?? 0.5) - 0.5),
     },
     {
       y: t.heightM * 0.68,
       halfWidth: t.chestHalfWidthM,
       halfDepth: t.chestHalfDepthM,
+      centerZ:
+        chestDepthM * ((surface?.chestAnteriorShare ?? 0.5) - 0.5),
     },
     {
       y: t.heightM,
       halfWidth: shoulderHalfWidth,
       halfDepth: t.chestHalfDepthM * 0.90,
+      centerZ:
+        chestDepthM * ((surface?.chestAnteriorShare ?? 0.5) - 0.5) * 0.35,
     },
   ];
 
@@ -98,7 +116,7 @@ function makeTorsoGeometry(dimensions) {
       vertices.push(
         x,
         ring.y - shoulderDrop,
-        Math.sin(angle) * ring.halfDepth,
+        ring.centerZ + Math.sin(angle) * ring.halfDepth,
       );
     }
   }
@@ -237,6 +255,7 @@ export function createProceduralBody(renderModel) {
   const material = grayMaterial();
   const jointMat = jointMaterial();
   const d = renderModel.dimensions;
+  const surface = renderModel.rendererLocalSurface;
 
   const crotchY = addLeg(group, -1, d, 0, material, jointMat);
   addLeg(group, 1, d, 0, material, jointMat);
@@ -248,11 +267,18 @@ export function createProceduralBody(renderModel) {
     material,
     28,
   );
-  pelvis.position.set(0, crotchY + d.pelvis.heightM * 0.48, 0);
+  const pelvisDepthM = d.pelvis.halfDepthM * 2;
+  const pelvisCenterZ =
+    -pelvisDepthM * ((surface?.glutePosteriorShare ?? 0.5) - 0.5);
+  pelvis.position.set(
+    0,
+    crotchY + d.pelvis.heightM * 0.48,
+    pelvisCenterZ,
+  );
   group.add(pelvis);
 
   const torsoBaseY = crotchY + d.pelvis.heightM * 0.68;
-  const torso = new THREE.Mesh(makeTorsoGeometry(d), material);
+  const torso = new THREE.Mesh(makeTorsoGeometry(d, surface), material);
   torso.position.set(0, torsoBaseY, 0);
   group.add(torso);
 
