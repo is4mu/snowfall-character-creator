@@ -10,6 +10,45 @@ import {
 export const TORSO_CROSS_SECTION_AUDIT_CONTRACT =
   "scc-torso-cross-section-audit-v0";
 
+
+function summarizeLoopGeometry(selectedLoop, center, cmPerUnit) {
+  if (!Array.isArray(selectedLoop?.points) || selectedLoop.points.length === 0) {
+    throw new TypeError("selected loop points are required");
+  }
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+
+  for (const point of selectedLoop.points) {
+    if (!Number.isFinite(point?.x) || !Number.isFinite(point?.z)) {
+      throw new TypeError("selected loop points must contain finite x and z");
+    }
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minZ = Math.min(minZ, point.z);
+    maxZ = Math.max(maxZ, point.z);
+  }
+
+  const breadthUnits = maxX - minX;
+  const depthUnits = maxZ - minZ;
+  const positiveZExtentUnits = maxZ - center.z;
+  const negativeZExtentUnits = center.z - minZ;
+
+  return {
+    boundsUnits: {minX, maxX, minZ, maxZ},
+    breadthUnits,
+    depthUnits,
+    positiveZExtentUnits,
+    negativeZExtentUnits,
+    breadthCm: breadthUnits * cmPerUnit,
+    depthCm: depthUnits * cmPerUnit,
+    positiveZExtentCm: positiveZExtentUnits * cmPerUnit,
+    negativeZExtentCm: negativeZExtentUnits * cmPerUnit,
+  };
+}
+
 function validateFractions(lowerBodyHeightFraction, upperBodyHeightFraction) {
   if (
     !Number.isFinite(lowerBodyHeightFraction) ||
@@ -123,6 +162,11 @@ export function sampleTorsoCrossSectionCurve({
       crossSection.loops,
       bodyCenter,
     );
+    const selectedLoopGeometry = summarizeLoopGeometry(
+      selectedLoop,
+      bodyCenter,
+      cmPerUnit,
+    );
     samples.push({
       index,
       heightFraction,
@@ -134,6 +178,7 @@ export function sampleTorsoCrossSectionCurve({
       openChainCount: 0,
       branchNodeCount: 0,
       selectedLoopCentroid: selectedLoop.centroid,
+      selectedLoopGeometry,
     });
   }
 
