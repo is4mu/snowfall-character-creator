@@ -1,0 +1,434 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snowfall Character Schema",
+  "description": "Portable fictional character data contract for Snowfall Character Creator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "characterId",
+    "identity"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0-draft.1",
+      "description": "Version of the Snowfall Character Schema used by this document."
+    },
+    "characterId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "description": "Stable application-independent identifier for the character."
+    },
+    "identity": {
+      "$ref": "#/$defs/identity"
+    },
+    "body": {
+      "$ref": "#/$defs/body"
+    },
+    "appearance": {
+      "$ref": "#/$defs/appearance"
+    },
+    "personality": {
+      "$ref": "#/$defs/personality"
+    },
+    "background": {
+      "$ref": "#/$defs/background"
+    },
+    "preferences": {
+      "$ref": "#/$defs/preferences"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Namespaced application-specific data. Core consumers must ignore namespaces they do not understand.",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "srgbHex": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "sRGB color encoded as #RRGGBB."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Human-readable color label."
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "srgbHex"
+          ]
+        },
+        {
+          "required": [
+            "label"
+          ]
+        }
+      ]
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "displayName"
+      ],
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "givenName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "middleName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "familyName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Calendar date of birth. Current age is derived and must not be persisted as a canonical field."
+        },
+        "gender": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Self- or author-defined gender label. The core schema intentionally does not impose a closed enum."
+        },
+        "species": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Species or character kind, such as human. Free-form in v1."
+        },
+        "preferredLocale": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 64,
+          "description": "Preferred BCP 47 language tag when relevant to presentation."
+        }
+      }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "heightCm": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000,
+          "description": "Standing height in centimeters."
+        },
+        "massKg": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000,
+          "description": "Body mass in kilograms."
+        },
+        "measurements": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shoulderBreadthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            },
+            "chestCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            },
+            "underbustCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            },
+            "waistCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            },
+            "hipCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            },
+            "inseamCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            },
+            "footLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm"
+            }
+          }
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Optional author notes for durable physical characteristics not yet represented structurally."
+        }
+      }
+    },
+    "bodyMeasurementCm": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000
+    },
+    "appearance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hair": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "$ref": "#/$defs/color"
+            },
+            "lengthCm": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 500
+            },
+            "style": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          }
+        },
+        "eyes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "irisColor": {
+              "$ref": "#/$defs/color"
+            }
+          }
+        },
+        "skin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tone": {
+              "$ref": "#/$defs/color"
+            }
+          }
+        },
+        "distinguishingFeatures": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          }
+        }
+      }
+    },
+    "personality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "traits"
+      ],
+      "properties": {
+        "model": {
+          "const": "scc-core-v1",
+          "description": "Canonical personality trait model used by this schema revision."
+        },
+        "traits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "openness",
+            "conscientiousness",
+            "extraversion",
+            "agreeableness",
+            "emotionalStability"
+          ],
+          "properties": {
+            "openness": {
+              "$ref": "#/$defs/trait01"
+            },
+            "conscientiousness": {
+              "$ref": "#/$defs/trait01"
+            },
+            "extraversion": {
+              "$ref": "#/$defs/trait01"
+            },
+            "agreeableness": {
+              "$ref": "#/$defs/trait01"
+            },
+            "emotionalStability": {
+              "$ref": "#/$defs/trait01"
+            }
+          }
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Optional human-readable interpretation. It is not the source of truth for trait values."
+        }
+      }
+    },
+    "trait01": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Normalized trait value where 0 and 1 represent opposite ends of the documented dimension."
+    },
+    "background": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "upbringing": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "education": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "occupations": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "familyNotes": {
+          "type": "string",
+          "maxLength": 3000
+        }
+      }
+    },
+    "preferenceAffinity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "value"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "value": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "-1 is strong aversion, 0 is neutral/unknown, and 1 is strong affinity."
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "affinities": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/preferenceAffinity"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "generator",
+            "version",
+            "seed"
+          ],
+          "properties": {
+            "generator": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "seed": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
