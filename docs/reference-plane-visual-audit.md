@@ -95,6 +95,8 @@ The overlay uses:
 - chest: blue translucent horizontal surface + outline;
 - underbust: orange translucent horizontal surface + outline.
 
+Marker dimensions are display-only. They are clamped against body height so the MakeHuman default-pose arm span cannot turn the thorax audit surface into a full arm-span plane.
+
 The underbust marker is created only when the finder returns `selected`.
 
 ## UI behavior
