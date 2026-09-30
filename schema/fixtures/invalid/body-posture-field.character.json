@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.body-posture-field",
+  "identity": {
+    "displayName": "Invalid Body Posture"
+  },
+  "body": {
+    "model": "scc-body-v1",
+    "posture": {
+      "trunkFlexionDeg": 10
+    }
+  }
+}
