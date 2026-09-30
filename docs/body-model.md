@@ -2,7 +2,11 @@
 
 ## Status
 
-This document defines the first draft of the Snowfall Character Creator body model, serialized as:
+**Freeze candidate for the first real human-mesh adapter.**
+
+The field inventory and semantics have completed multiple procedural 3D mapping passes. Until real-mesh evidence demonstrates a missing portable concept, new canonical fields should not be added for convenience.
+
+This document defines the Snowfall Character Creator body model, serialized as:
 
 ```text
 scc-body-v1
@@ -109,7 +113,7 @@ Together these fields capture major vertical and limb proportions that a single 
 
 `chestCircumferenceCm` is deliberately a physical circumference rather than a localized clothing or bra-size concept. Breadth/depth fields were added after the first 3D mapping prototype showed that circumference alone cannot determine a unique torso cross-section.
 
-A later measurement-protocol document should pin exact landmarks for creator-assisted measurement. Draft v1 does not claim that every field is an exact ISO 7250 field name.
+Canonical landmarks and reference conditions are defined in [Body Measurement Protocol v1](body-measurement-protocol.md). Draft v1 does not claim that every SCC field is an exact ISO 7250 field name.
 
 ### Arms and legs
 
@@ -308,17 +312,55 @@ SCC body parameters -> renderer/body-model parameters
 
 That mapping can change without changing the Character Schema, provided the meaning of SCC fields remains stable.
 
+
+## Freeze candidate policy
+
+Body Model v1 is now considered **semantically frozen for the first real-mesh integration pass**.
+
+This is not the same as declaring the entire Character Schema stable `1.0.0`. The overall schema remains `1.0.0-draft.1`.
+
+During the freeze:
+
+- existing body-field meanings must not change;
+- renderer adapters must preserve the SCC measurement semantics;
+- new canonical body fields require evidence from a real human-mesh adapter or a concrete cross-renderer interoperability failure;
+- renderer convenience is not sufficient justification for a new field;
+- missing values remain optional rather than being fabricated;
+- renderer-local morphs remain outside Character Schema.
+
+### Explicitly deferred, non-blocking areas
+
+The following do **not** block the first real-mesh adapter:
+
+- left/right asymmetry;
+- regional muscle distribution;
+- detailed head and face geometry;
+- local chest/abdomen/glute surface distribution beyond gross measurements;
+- habitual posture and current pose;
+- intimate anatomy.
+
+They remain visible design limitations rather than hidden assumptions.
+
+### Promotion rule
+
+A new body property may break the freeze only when:
+
+1. two materially different bodies cannot be represented by the current canonical values;
+2. the missing concept has renderer-independent semantics;
+3. at least two plausible renderer/body-model implementations could consume it consistently;
+4. it cannot be represented safely as renderer-local state or a separate future model;
+5. a focused fixture and adapter test can define its contract.
+
 ## Validation questions before stable 1.0
 
-Before Body Model v1 is considered stable, the project should test:
+Before Body Model v1 moves from freeze candidate to stable semantics, the project should test:
 
-1. whether the current measurements can reproduce visibly different realistic proportions;
-2. whether `shapePrior` is useful after enough measurements are supplied;
-3. whether `bodyFatFraction` and `muscularity` are sufficient composition controls;
-4. which surface-shape controls are impossible to infer reliably;
-5. whether a masculine, feminine, and neutral starting mesh can map to the same canonical measurements;
-6. whether round-tripping through a 3D adapter preserves the intended body;
-7. whether the model handles incomplete characters without silently fabricating facts.
+1. whether a real human base mesh can reproduce the current canonical measurements without redefining them;
+2. whether `shapePrior` remains useful after enough measurements are supplied;
+3. whether `bodyFatFraction` and `muscularity` are sufficiently portable across at least two mesh-generation approaches;
+4. whether masculine, feminine, and neutral starting meshes can map to the same explicit canonical measurements;
+5. whether round-tripping through a real-mesh adapter preserves authored measurements within a documented tolerance;
+6. whether the model handles incomplete characters without silently fabricating facts.
 
 ## v1 rule
 
