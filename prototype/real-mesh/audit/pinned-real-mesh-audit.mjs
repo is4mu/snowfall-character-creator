@@ -31,6 +31,9 @@ import {
   sampleTorsoCrossSectionCurve,
 } from "../torso-cross-section-audit.mjs";
 import {
+  findUnderbustReferencePlane,
+} from "../underbust-reference-plane.mjs";
+import {
   fetchVerifiedAssetText,
 } from "./pinned-asset-loader.mjs";
 
@@ -305,6 +308,20 @@ async function main() {
       upperBodyHeightFraction: auditUpperFraction,
       sampleCount: 29,
     });
+    const baselineUnderbustReference =
+      findUnderbustReferencePlane({
+        positions: solved.positions,
+        triangles: bodyTriangles,
+        bodyVertexIndices,
+        chestReferenceHeightFraction:
+          selectedChestFraction,
+        surfaceDirection: {x: 0, z: 1},
+      });
+    assert.equal(
+      baselineUnderbustReference.status,
+      "selected",
+      `${shapePrior}: baseline underbust reference was not selected`,
+    );
 
     const targetEffects = UNDERBUST_AUDIT_WEIGHTS.map(
       (underbustWeight) => {
@@ -335,6 +352,18 @@ async function main() {
           upperBodyHeightFraction: auditUpperFraction,
           sampleCount: 29,
         });
+        const chestReferenceHeightFraction =
+          chest.reference?.selected?.heightFraction ?? null;
+        const underbustReference =
+          chestReferenceHeightFraction === null
+            ? null
+            : findUnderbustReferencePlane({
+                positions,
+                triangles: bodyTriangles,
+                bodyVertexIndices,
+                chestReferenceHeightFraction,
+                surfaceDirection: {x: 0, z: 1},
+              });
 
         return {
           underbustWeight,
@@ -353,6 +382,21 @@ async function main() {
               : null,
           selectedChestHeightFraction:
             chest.reference?.selected?.heightFraction ?? null,
+          underbustReference: underbustReference
+            ? {
+                contract: underbustReference.contract,
+                status: underbustReference.status,
+                selectedHeightFraction:
+                  underbustReference.selected?.heightFraction ?? null,
+                prominenceHeightFraction:
+                  underbustReference.selected
+                    ?.prominenceHeightFraction ?? null,
+                peakHeightFraction:
+                  underbustReference.selected?.peakHeightFraction ?? null,
+                candidateCount:
+                  underbustReference.candidates?.length ?? 0,
+              }
+            : null,
           crossSectionCurve: summarizeCrossSectionCurve(curve),
         };
       },
@@ -394,10 +438,34 @@ async function main() {
       },
       baselineCrossSectionCurve:
         summarizeCrossSectionCurve(baselineCurve),
+      baselineUnderbustReference: {
+        contract: baselineUnderbustReference.contract,
+        status: baselineUnderbustReference.status,
+        selectedHeightFraction:
+          baselineUnderbustReference.selected?.heightFraction ?? null,
+        prominenceHeightFraction:
+          baselineUnderbustReference.selected
+            ?.prominenceHeightFraction ?? null,
+        peakHeightFraction:
+          baselineUnderbustReference.selected?.peakHeightFraction ?? null,
+        candidateCount:
+          baselineUnderbustReference.candidates?.length ?? 0,
+      },
       targetEffects,
       conclusion:
         "No underbust reference plane or calibration support is inferred by this audit.",
     });
+
+    if (shapePrior === "masculine") {
+      const positiveExtreme = targetEffects.find(
+        (effect) => effect.underbustWeight === 1,
+      );
+      assert.equal(
+        positiveExtreme?.underbustReference?.status,
+        "no-stable-landmark",
+        "masculine +1 underbust target must remain an explicit negative landmark case",
+      );
+    }
 
     results.push(summarizeSolve(shapePrior, solved));
   }
