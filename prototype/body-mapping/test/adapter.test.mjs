@@ -64,6 +64,14 @@ test("explicit semantic measurements override shape-prior defaults", () => {
     masculine.fallbackFields.includes("measurements.shoulderBreadthCm"),
     false,
   );
+  assert.equal(
+    feminine.dimensions.torso.chestHalfDepthM,
+    masculine.dimensions.torso.chestHalfDepthM,
+  );
+  assert.notEqual(
+    feminine.rendererLocalSurface.chestAnteriorShare,
+    masculine.rendererLocalSurface.chestAnteriorShare,
+  );
 });
 
 test("shape prior only changes missing values", () => {
