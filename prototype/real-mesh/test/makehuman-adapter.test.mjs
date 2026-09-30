@@ -8,7 +8,7 @@ import {
 import {
   MAKEHUMAN_FIELD_MAPPING,
   getMakeHumanMeasurementTargetPair,
-  makeHumanShapePriorSeed,
+  makeHumanShapePriorPlan,
   planMakeHumanMapping,
 } from "../makehuman-adapter.mjs";
 
@@ -150,15 +150,17 @@ test("prototype shoulder calibration is separated from pending calibration queue
   });
 });
 
-test("shapePrior seeds renderer morphology without identity input", () => {
-  assert.deepEqual(makeHumanShapePriorSeed("feminine"), {
-    modifier: "macrodetails/Gender",
+test("shapePrior plans renderer morphology without identity input", () => {
+  assert.deepEqual(makeHumanShapePriorPlan("feminine"), {
+    contract: "scc-makehuman-shape-prior-v0",
     value: 0,
     source: "body.shapePrior",
     rendererLocal: true,
+    endpointPolicy: "equal-three-source-group-blend",
+    precedence: "explicit-measurements-after-prior",
   });
-  assert.equal(makeHumanShapePriorSeed("neutral").value, 0.5);
-  assert.equal(makeHumanShapePriorSeed("masculine").value, 1);
+  assert.equal(makeHumanShapePriorPlan("neutral").value, 0.5);
+  assert.equal(makeHumanShapePriorPlan("masculine").value, 1);
 });
 
 test("body fat is not falsely equated with MakeHuman Weight", () => {
