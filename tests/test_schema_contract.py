@@ -115,6 +115,7 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "waistCircumferenceCm",
             "waistBreadthCm",
             "waistDepthCm",
+            "abdominalDepthCm",
             "hipCircumferenceCm",
             "hipBreadthCm",
             "buttockDepthCm",
@@ -219,6 +220,14 @@ class CharacterSchemaContractTests(unittest.TestCase):
                     "body",
                     "measurements",
                     "chestDepthCm",
+                ],
+            },
+            "body-negative-abdominal-depth.character.json": {
+                "validator": "exclusiveMinimum",
+                "instance_path": [
+                    "body",
+                    "measurements",
+                    "abdominalDepthCm",
                 ],
             },
             "missing-identity.character.json": {
