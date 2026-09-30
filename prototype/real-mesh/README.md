@@ -61,3 +61,20 @@ The canonical `shoulderBreadthCm` control now drives the pinned shoulder target 
 The renderer landmark pair is provisional and the mapping is not yet stable.
 
 The solved target weight is renderer-local only. If the requested centimeters are outside the target's reachable range, diagnostics report `out-of-range` instead of altering the canonical value.
+
+
+## Real-mesh shape prior
+
+`body.shapePrior` now changes the pinned human mesh through an SCC-owned blend of pinned CC0 macro assets.
+
+Render order:
+
+```text
+base -> shape prior -> explicit shoulder calibration -> canonical height
+```
+
+This ensures explicit SCC measurements remain authoritative.
+
+The implementation does not inspect `identity.gender`.
+
+Current status is prototype because the upstream macro assets also affect head/face geometry. The renderer prior must be visually audited before promotion.
