@@ -231,18 +231,21 @@ export function solveRendererTargetByBrackets({
     tolerance,
   });
 
-  if (scan.exactHits.length > 0) {
-    const best = [...scan.exactHits].sort((a, b) => {
-      const residualDelta =
-        Math.abs(a.residual) - Math.abs(b.residual);
-      if (residualDelta !== 0) return residualDelta;
-      return Math.abs(a.weight) - Math.abs(b.weight);
-    })[0];
+  if (scan.exactHits.length > 1) {
+    return {
+      status: "ambiguous-multiple-brackets",
+      source: "multiple-coarse-exact-hits",
+      best: null,
+      scan,
+      refinement: null,
+    };
+  }
 
+  if (scan.exactHits.length === 1) {
     return {
       status: "solved",
       source: "coarse-exact-hit",
-      best,
+      best: scan.exactHits[0],
       scan,
       refinement: null,
     };
