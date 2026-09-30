@@ -5,13 +5,54 @@
     "displayName": "Invalid Personality"
   },
   "personality": {
-    "model": "scc-core-v1",
+    "model": "scc-personality-v1",
     "traits": {
-      "openness": 0.5,
-      "conscientiousness": 0.5,
-      "extraversion": 1.2,
-      "agreeableness": 0.5,
-      "emotionalStability": 0.5
+      "openness": {
+        "intellectualCuriosity": 0.5,
+        "creativeImagination": 0.5,
+        "aestheticSensitivity": 0.5,
+        "unconventionality": 0.5
+      },
+      "selfRegulation": {
+        "orderliness": 0.5,
+        "diligence": 0.5,
+        "deliberation": 0.5
+      },
+      "social": {
+        "sociability": 1.2,
+        "assertiveness": 0.5,
+        "socialConfidence": 0.5,
+        "activityLevel": 0.5,
+        "emotionalExpressiveness": 0.5
+      },
+      "interpersonal": {
+        "empathy": 0.5,
+        "compassion": 0.5,
+        "trust": 0.5,
+        "forgiveness": 0.5,
+        "respectfulness": 0.5
+      },
+      "integrity": {
+        "sincerity": 0.5,
+        "fairness": 0.5
+      },
+      "emotional": {
+        "anxietyProneness": 0.5,
+        "irritability": 0.5,
+        "sadnessProneness": 0.5,
+        "moodVolatility": 0.5,
+        "recoverySpeed": 0.5
+      },
+      "behavioral": {
+        "statusMotivation": 0.5,
+        "rewardSensitivity": 0.5,
+        "sensationSeeking": 0.5,
+        "emotionalUrgency": 0.5
+      },
+      "attachment": {
+        "attachmentAnxiety": 0.5,
+        "attachmentAvoidance": 0.5
+      }
     }
   }
 }
