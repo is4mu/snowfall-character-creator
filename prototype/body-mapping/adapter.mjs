@@ -131,14 +131,58 @@ function solveEllipseHalfDepth(circumferenceM, halfWidthM) {
   return (low + high) / 2;
 }
 
-function sectionFromCircumference(circumferenceCm, widthAspect) {
+function sectionFromMeasurements({
+  circumferenceCm,
+  breadthCm,
+  depthCm,
+  widthAspect,
+}) {
+  const explicitBreadth =
+    Number.isFinite(breadthCm) && breadthCm > 0 ? cmToM(breadthCm) : null;
+  const explicitDepth =
+    Number.isFinite(depthCm) && depthCm > 0 ? cmToM(depthCm) : null;
+
+  if (explicitBreadth && explicitDepth) {
+    return {
+      halfWidthM: explicitBreadth / 2,
+      halfDepthM: explicitDepth / 2,
+      usedExplicitBreadth: true,
+      usedExplicitDepth: true,
+    };
+  }
+
   const circumferenceM = cmToM(circumferenceCm);
+
+  if (explicitBreadth) {
+    return {
+      halfWidthM: explicitBreadth / 2,
+      halfDepthM: solveEllipseHalfDepth(circumferenceM, explicitBreadth / 2),
+      usedExplicitBreadth: true,
+      usedExplicitDepth: false,
+    };
+  }
+
+  if (explicitDepth) {
+    const solvedHalfWidth = solveEllipseHalfDepth(
+      circumferenceM,
+      explicitDepth / 2,
+    );
+    return {
+      halfWidthM: solvedHalfWidth,
+      halfDepthM: explicitDepth / 2,
+      usedExplicitBreadth: false,
+      usedExplicitDepth: true,
+    };
+  }
+
   const equivalentRadius = equivalentRadiusFromCircumference(circumferenceM);
   const halfWidth = equivalentRadius * widthAspect;
   const halfDepth = solveEllipseHalfDepth(circumferenceM, halfWidth);
   return {
     halfWidthM: halfWidth,
     halfDepthM: halfDepth,
+    usedExplicitBreadth: false,
+    usedExplicitDepth: false,
   };
 }
 
@@ -210,18 +254,39 @@ export function mapBodyToRenderModel(body) {
   const softTissueScale = 0.92 + bodyFatFraction * 0.34;
   const muscleScale = 0.88 + muscularity * 0.28;
 
-  const chest = sectionFromCircumference(
-    chestCircumferenceCm,
-    shapePrior === "masculine" ? 1.19 : shapePrior === "feminine" ? 1.13 : 1.16,
-  );
-  const waist = sectionFromCircumference(
-    waistCircumferenceCm,
-    shapePrior === "feminine" ? 1.16 : 1.14,
-  );
-  const hip = sectionFromCircumference(
-    hipCircumferenceCm,
-    shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
-  );
+  const chest = sectionFromMeasurements({
+    circumferenceCm: chestCircumferenceCm,
+    breadthCm: measurements.chestBreadthCm,
+    depthCm: measurements.chestDepthCm,
+    widthAspect:
+      shapePrior === "masculine" ? 1.19 : shapePrior === "feminine" ? 1.13 : 1.16,
+  });
+  const waist = sectionFromMeasurements({
+    circumferenceCm: waistCircumferenceCm,
+    breadthCm: measurements.waistBreadthCm,
+    depthCm: measurements.waistDepthCm,
+    widthAspect: shapePrior === "feminine" ? 1.16 : 1.14,
+  });
+  const hip = sectionFromMeasurements({
+    circumferenceCm: hipCircumferenceCm,
+    breadthCm: measurements.hipBreadthCm,
+    depthCm: measurements.buttockDepthCm,
+    widthAspect:
+      shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
+  });
+
+  for (const [section, breadthField, depthField] of [
+    [chest, "measurements.chestBreadthCm", "measurements.chestDepthCm"],
+    [waist, "measurements.waistBreadthCm", "measurements.waistDepthCm"],
+    [hip, "measurements.hipBreadthCm", "measurements.buttockDepthCm"],
+  ]) {
+    if (!section.usedExplicitBreadth) {
+      fallbackFields.push(breadthField);
+    }
+    if (!section.usedExplicitDepth) {
+      fallbackFields.push(depthField);
+    }
+  }
 
   const heightM = cmToM(heightCm);
   const inseamM = Math.min(cmToM(inseamCm), heightM * 0.58);
@@ -241,9 +306,7 @@ export function mapBodyToRenderModel(body) {
   const upperArmLengthM = Math.max(0.12, (armLengthM - handLengthM) * 0.52);
   const forearmLengthM = Math.max(0.11, (armLengthM - handLengthM) * 0.48);
 
-  const limbScale = 0.78 + 0.16 * softTissueScale + 0.16 * muscleScale;
-
-  return {
+    return {
     rendererContract: "scc-procedural-body-render-v0",
     sourceModel: body.model,
     shapePrior,
@@ -265,31 +328,31 @@ export function mapBodyToRenderModel(body) {
       torso: {
         heightM: torsoHeightM,
         chestHalfWidthM: chest.halfWidthM,
-        chestHalfDepthM: chest.halfDepthM * softTissueScale,
+        chestHalfDepthM: chest.halfDepthM,
         waistHalfWidthM: waist.halfWidthM,
-        waistHalfDepthM: waist.halfDepthM * softTissueScale,
+        waistHalfDepthM: waist.halfDepthM,
         hipHalfWidthM: hip.halfWidthM,
-        hipHalfDepthM: hip.halfDepthM * softTissueScale,
+        hipHalfDepthM: hip.halfDepthM,
       },
       pelvis: {
         heightM: pelvisHeightM,
         halfWidthM: hip.halfWidthM,
-        halfDepthM: hip.halfDepthM * softTissueScale,
+        halfDepthM: hip.halfDepthM,
       },
       arms: {
         upperLengthM: upperArmLengthM,
         forearmLengthM,
         handLengthM,
         handBreadthM: cmToM(handBreadthCm),
-        upperRadiusM: circumferenceRadius(upperArmCircumferenceCm, limbScale),
-        forearmRadiusM: circumferenceRadius(forearmCircumferenceCm, limbScale),
+        upperRadiusM: circumferenceRadius(upperArmCircumferenceCm),
+        forearmRadiusM: circumferenceRadius(forearmCircumferenceCm),
         wristRadiusM: circumferenceRadius(wristCircumferenceCm),
       },
       legs: {
         upperLengthM: upperLegLengthM,
         lowerLengthM: lowerLegLengthM,
-        upperRadiusM: circumferenceRadius(thighCircumferenceCm, limbScale),
-        calfRadiusM: circumferenceRadius(calfCircumferenceCm, limbScale),
+        upperRadiusM: circumferenceRadius(thighCircumferenceCm),
+        calfRadiusM: circumferenceRadius(calfCircumferenceCm),
         ankleRadiusM: circumferenceRadius(ankleCircumferenceCm),
         footLengthM: cmToM(footLengthCm),
         footBreadthM: cmToM(footBreadthCm),
@@ -303,7 +366,7 @@ export function mapBodyToRenderModel(body) {
     },
     unresolvedShapeDimensions: [
       "shoulderSlope",
-      "torsoCrossSectionProfile",
+      "torsoCrossSectionProfileBeyondBreadthDepth",
       "chestOrBreastProjection",
       "abdomenProjection",
       "gluteProjection",

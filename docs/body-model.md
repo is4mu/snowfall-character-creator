@@ -73,7 +73,7 @@ Omitting `shapePrior` means that a downstream renderer must not assume one.
 
 The measurement layer contains renderer-independent physical dimensions.
 
-Body Model v1 currently supports 22 linear measurements in centimeters plus body mass in kilograms.
+Body Model v1 currently supports 28 linear measurements in centimeters plus body mass in kilograms.
 
 ### Overall proportions
 
@@ -94,12 +94,18 @@ Together these fields capture major vertical and limb proportions that a single 
 | --- | --- |
 | `shoulderBreadthCm` | shoulder breadth |
 | `chestCircumferenceCm` | chest/bust-level torso circumference |
+| `chestBreadthCm` | horizontal chest breadth |
+| `chestDepthCm` | front-to-back chest depth |
 | `underbustCircumferenceCm` | circumference directly below breast/chest tissue where applicable |
 | `waistCircumferenceCm` | waist circumference |
+| `waistBreadthCm` | horizontal waist breadth |
+| `waistDepthCm` | front-to-back waist depth |
 | `hipCircumferenceCm` | maximum hip/buttock circumference |
+| `hipBreadthCm` | maximum standing hip breadth |
+| `buttockDepthCm` | front-to-back depth at the buttocks |
 | `neckCircumferenceCm` | neck circumference |
 
-`chestCircumferenceCm` is deliberately a physical circumference rather than a localized clothing or bra-size concept.
+`chestCircumferenceCm` is deliberately a physical circumference rather than a localized clothing or bra-size concept. Breadth/depth fields were added after the first 3D mapping prototype showed that circumference alone cannot determine a unique torso cross-section.
 
 A later measurement-protocol document should pin exact landmarks for creator-assisted measurement. Draft v1 does not claim that every field is an exact ISO 7250 field name.
 
@@ -258,7 +264,7 @@ Candidates include:
 - abdomen projection;
 - glute projection and fullness;
 - shoulder slope;
-- torso cross-section depth;
+- torso surface contour beyond the explicit breadth/depth measurements;
 - regional muscle distribution;
 - posture;
 - left/right asymmetry.
@@ -270,7 +276,7 @@ There are two risks in adding them prematurely:
 1. defining subjective sliders that only make sense for one mesh;
 2. duplicating geometry that can already be reconstructed from measurements.
 
-The first 3D prototype should test which of these parameters are genuinely needed and whether they can be expressed with stable renderer-independent semantics.
+The first 3D prototype confirmed that torso breadth/depth measurements materially reduce renderer guesswork, so those dimensions are now explicit. Remaining surface-shape candidates still require further visual validation before being frozen.
 
 ## Intimate anatomy
 

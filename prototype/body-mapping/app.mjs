@@ -59,8 +59,14 @@ const controlsConfig = [
   ["heightCm", "Height", 140, 205, 1],
   ["shoulderBreadthCm", "Shoulder breadth", 30, 55, 0.5],
   ["chestCircumferenceCm", "Chest circumference", 65, 125, 1],
+  ["chestBreadthCm", "Chest breadth", 20, 45, 0.5],
+  ["chestDepthCm", "Chest depth", 14, 35, 0.5],
   ["waistCircumferenceCm", "Waist circumference", 50, 120, 1],
+  ["waistBreadthCm", "Waist breadth", 18, 40, 0.5],
+  ["waistDepthCm", "Waist depth", 12, 32, 0.5],
   ["hipCircumferenceCm", "Hip circumference", 65, 130, 1],
+  ["hipBreadthCm", "Hip breadth", 22, 48, 0.5],
+  ["buttockDepthCm", "Buttock depth", 14, 36, 0.5],
 ];
 
 function resize() {

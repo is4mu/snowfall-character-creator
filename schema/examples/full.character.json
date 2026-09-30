@@ -36,7 +36,13 @@
       "handBreadthCm": 7.5,
       "footLengthCm": 25,
       "footBreadthCm": 9.5,
-      "headCircumferenceCm": 55
+      "headCircumferenceCm": 55,
+      "chestBreadthCm": 30.5,
+      "chestDepthCm": 23.5,
+      "waistBreadthCm": 25.5,
+      "waistDepthCm": 19.5,
+      "hipBreadthCm": 34,
+      "buttockDepthCm": 24
     },
     "composition": {
       "bodyFatFraction": 0.26,

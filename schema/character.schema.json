@@ -262,6 +262,30 @@
             "headCircumferenceCm": {
               "$ref": "#/$defs/bodyMeasurementCm",
               "description": "Maximum head circumference."
+            },
+            "chestBreadthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Horizontal chest breadth at the documented chest measurement level."
+            },
+            "chestDepthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Front-to-back chest depth at the documented chest measurement level."
+            },
+            "waistBreadthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Horizontal waist breadth at the documented waist measurement level."
+            },
+            "waistDepthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Front-to-back waist depth at the documented waist measurement level."
+            },
+            "hipBreadthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Maximum standing hip breadth."
+            },
+            "buttockDepthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Front-to-back body depth at the buttocks."
             }
           },
           "description": "Renderer-independent anthropometric measurements. Field names carry canonical metric units."

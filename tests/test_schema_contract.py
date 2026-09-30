@@ -104,9 +104,15 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "sittingHeightCm",
             "shoulderBreadthCm",
             "chestCircumferenceCm",
+            "chestBreadthCm",
+            "chestDepthCm",
             "underbustCircumferenceCm",
             "waistCircumferenceCm",
+            "waistBreadthCm",
+            "waistDepthCm",
             "hipCircumferenceCm",
+            "hipBreadthCm",
+            "buttockDepthCm",
             "neckCircumferenceCm",
             "upperArmCircumferenceCm",
             "forearmCircumferenceCm",
@@ -193,6 +199,14 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "body-shape-prior-invalid.character.json": {
                 "validator": "enum",
                 "instance_path": ["body", "shapePrior"],
+            },
+            "body-negative-depth.character.json": {
+                "validator": "exclusiveMinimum",
+                "instance_path": [
+                    "body",
+                    "measurements",
+                    "chestDepthCm",
+                ],
             },
             "missing-identity.character.json": {
                 "validator": "required",
