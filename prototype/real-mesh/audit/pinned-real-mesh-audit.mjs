@@ -456,14 +456,36 @@ async function main() {
         "No underbust reference plane or calibration support is inferred by this audit.",
     });
 
-    if (shapePrior === "masculine") {
-      const positiveExtreme = targetEffects.find(
-        (effect) => effect.underbustWeight === 1,
-      );
+    for (const effect of targetEffects) {
+      const isKnownNegative =
+        shapePrior === "masculine" &&
+        effect.underbustWeight === 1;
+
+      if (isKnownNegative) {
+        assert.equal(
+          effect.underbustReference?.status,
+          "no-stable-landmark",
+          "masculine +1 underbust target must remain an explicit negative landmark case",
+        );
+        continue;
+      }
+
       assert.equal(
-        positiveExtreme?.underbustReference?.status,
-        "no-stable-landmark",
-        "masculine +1 underbust target must remain an explicit negative landmark case",
+        effect.underbustReference?.status,
+        "selected",
+        `${shapePrior} ${effect.underbustWeight}: expected a stable underbust reference`,
+      );
+      assert.ok(
+        Number.isFinite(
+          effect.underbustReference?.selectedHeightFraction,
+        ) &&
+          Number.isFinite(
+            effect.selectedChestHeightFraction,
+          ) &&
+          effect.selectedChestHeightFraction -
+            effect.underbustReference.selectedHeightFraction <=
+            0.08 + 1e-12,
+        `${shapePrior} ${effect.underbustWeight}: selected underbust reference escaped the immediate below-chest band`,
       );
     }
 
