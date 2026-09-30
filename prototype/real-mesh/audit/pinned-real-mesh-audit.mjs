@@ -8,6 +8,7 @@ import {
   MAKEHUMAN_SHAPE_PRIOR_TARGETS,
 } from "../asset-manifest.mjs";
 import {
+  evaluateCoupledChestCandidate,
   solveCoupledChestCircumference,
 } from "../makehuman-coupled-calibration.mjs";
 import {
@@ -34,6 +35,14 @@ import {
   findUnderbustReferencePlane,
 } from "../underbust-reference-plane.mjs";
 import {
+  CHEST_REFERENCE_SWEEP_CONTRACT,
+  detectChestReferenceJumps,
+  detectUnderbustTransitions,
+  evenlySpacedWeights,
+  jumpNeighborhoodIndices,
+  summarizeChestSweepSample,
+} from "../chest-reference-sweep.mjs";
+import {
   fetchVerifiedAssetText,
 } from "./pinned-asset-loader.mjs";
 
@@ -49,6 +58,34 @@ const UNDERBUST_AUDIT_WEIGHTS = Object.freeze([
   0,
   0.5,
   1,
+]);
+
+const PRIMARY_CHEST_REFERENCE_SWEEP = Object.freeze({
+  shapePrior: "feminine",
+  canonicalHeightCm: 162,
+  targetShoulderBreadthCm: 39,
+  sampleCount: 81,
+});
+
+const CONTROL_CHEST_REFERENCE_SWEEPS = Object.freeze([
+  Object.freeze({
+    shapePrior: "feminine",
+    canonicalHeightCm: 162,
+    targetShoulderBreadthCm: 38,
+    sampleCount: 17,
+  }),
+  Object.freeze({
+    shapePrior: "neutral",
+    canonicalHeightCm: 162,
+    targetShoulderBreadthCm: 38,
+    sampleCount: 17,
+  }),
+  Object.freeze({
+    shapePrior: "masculine",
+    canonicalHeightCm: 162,
+    targetShoulderBreadthCm: 38,
+    sampleCount: 17,
+  }),
 ]);
 
 function outputPathFromArgs(args) {
@@ -110,6 +147,173 @@ function summarizeCrossSectionCurve(curve) {
       selectedLoopGeometry:
         sample.selectedLoopGeometry ?? null,
     })),
+  };
+}
+
+
+function summarizeUnderbustReference(reference, chestFraction, canonicalHeightCm) {
+  if (!reference) {
+    return {
+      status: "not-evaluated",
+      selectedHeightFraction: null,
+      prominenceHeightFraction: null,
+      peakHeightFraction: null,
+      chestToUnderbustCm: null,
+    };
+  }
+
+  const selectedFraction =
+    reference.selected?.heightFraction ?? null;
+
+  return {
+    status: reference.status,
+    selectedHeightFraction: selectedFraction,
+    prominenceHeightFraction:
+      reference.selected?.prominenceHeightFraction ?? null,
+    peakHeightFraction:
+      reference.selected?.peakHeightFraction ?? null,
+    chestToUnderbustCm:
+      Number.isFinite(chestFraction) &&
+      Number.isFinite(selectedFraction)
+        ? (chestFraction - selectedFraction) * canonicalHeightCm
+        : null,
+  };
+}
+
+function buildSweepJumpNeighborhood({
+  jump,
+  evaluations,
+  summaries,
+  bodyTriangles,
+  bodyVertexIndices,
+  canonicalHeightCm,
+}) {
+  const indices = jumpNeighborhoodIndices(
+    summaries.length,
+    [jump],
+    1,
+  );
+
+  const neighborhood = indices.map((sampleIndex) => {
+    const evaluation = evaluations[sampleIndex];
+    const summary = summaries[sampleIndex];
+    const chestFraction =
+      summary.selectedChestHeightFraction;
+
+    let underbustReference = null;
+    if (
+      evaluation?.status === "measured" &&
+      Number.isFinite(chestFraction)
+    ) {
+      underbustReference = findUnderbustReferencePlane({
+        positions: evaluation.positions,
+        triangles: bodyTriangles,
+        bodyVertexIndices,
+        chestReferenceHeightFraction: chestFraction,
+        surfaceDirection: {x: 0, z: 1},
+      });
+    }
+
+    return {
+      sampleIndex,
+      ...summary,
+      underbustReference:
+        summarizeUnderbustReference(
+          underbustReference,
+          chestFraction,
+          canonicalHeightCm,
+        ),
+    };
+  });
+
+  return {
+    jump,
+    neighborhood,
+    underbustTransitions:
+      detectUnderbustTransitions(neighborhood),
+  };
+}
+
+function runChestReferenceSweep({
+  priorPositions,
+  shapePrior,
+  canonicalHeightCm,
+  targetShoulderBreadthCm,
+  sampleCount,
+  bustDecreaseDeltas,
+  bustIncreaseDeltas,
+  shoulderDecreaseDeltas,
+  shoulderIncreaseDeltas,
+  bodyTriangles,
+  bodyVertexIndices,
+}) {
+  const before = new Float64Array(priorPositions);
+  const weights = evenlySpacedWeights(sampleCount);
+
+  const evaluations = weights.map((bustWeight) =>
+    evaluateCoupledChestCandidate({
+      priorPositions,
+      bustDecreaseDeltas,
+      bustIncreaseDeltas,
+      bustWeight,
+      shoulderDecreaseDeltas,
+      shoulderIncreaseDeltas,
+      canonicalHeightCm,
+      targetShoulderBreadthCm,
+      bodyTriangles,
+      bodyVertexIndices,
+      shoulderToleranceCm: 0.01,
+    })
+  );
+
+  const samples = evaluations.map((evaluation, index) =>
+    summarizeChestSweepSample({
+      weight: weights[index],
+      evaluation,
+    })
+  );
+
+  const chestReferenceJumps =
+    detectChestReferenceJumps(samples);
+
+  const jumpNeighborhoods = chestReferenceJumps.map((jump) =>
+    buildSweepJumpNeighborhood({
+      jump,
+      evaluations,
+      summaries: samples,
+      bodyTriangles,
+      bodyVertexIndices,
+      canonicalHeightCm,
+    })
+  );
+
+  assertFloatArrayUnchanged(
+    before,
+    priorPositions,
+    `${shapePrior} shoulder-${targetShoulderBreadthCm} chest sweep prior geometry`,
+  );
+
+  const measuredValues = samples
+    .map((sample) => sample.measuredChestCm)
+    .filter(Number.isFinite);
+
+  return {
+    contract: CHEST_REFERENCE_SWEEP_CONTRACT,
+    semanticStatus: "exploratory-only",
+    shapePrior,
+    canonicalHeightCm,
+    targetShoulderBreadthCm,
+    sampleCount,
+    measuredChestRangeCm:
+      measuredValues.length > 0
+        ? {
+            min: Math.min(...measuredValues),
+            max: Math.max(...measuredValues),
+          }
+        : null,
+    chestReferenceJumps,
+    jumpNeighborhoods,
+    samples,
   };
 }
 
@@ -217,6 +421,7 @@ async function main() {
 
   const results = [];
   const underbustExploration = [];
+  const priorsByName = new Map();
 
   for (const shapePrior of [
     "feminine",
@@ -229,6 +434,10 @@ async function main() {
       shapePrior,
     });
     const priorBefore = new Float64Array(prior.positions);
+    priorsByName.set(
+      shapePrior,
+      new Float64Array(prior.positions),
+    );
 
     const solved = solveCoupledChestCircumference({
       priorPositions: prior.positions,
@@ -492,6 +701,31 @@ async function main() {
     results.push(summarizeSolve(shapePrior, solved));
   }
 
+  const sweepCases = [
+    PRIMARY_CHEST_REFERENCE_SWEEP,
+    ...CONTROL_CHEST_REFERENCE_SWEEPS,
+  ];
+
+  const chestReferenceSweep = sweepCases.map((sweepCase) => {
+    const priorPositions =
+      priorsByName.get(sweepCase.shapePrior);
+    assert.ok(
+      priorPositions,
+      `missing cached prior for ${sweepCase.shapePrior}`,
+    );
+
+    return runChestReferenceSweep({
+      priorPositions,
+      ...sweepCase,
+      bustDecreaseDeltas,
+      bustIncreaseDeltas,
+      shoulderDecreaseDeltas,
+      shoulderIncreaseDeltas,
+      bodyTriangles,
+      bodyVertexIndices,
+    });
+  });
+
   verifiedAssets.sort((a, b) =>
     a.path.localeCompare(b.path)
   );
@@ -516,6 +750,7 @@ async function main() {
     verifiedAssets,
     results,
     underbustExploration,
+    chestReferenceSweep,
   };
 
   await mkdir(dirname(outputPath), { recursive: true });
