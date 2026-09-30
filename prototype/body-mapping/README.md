@@ -24,12 +24,15 @@ The preview imports Three.js 0.186.1 from jsDelivr. No Three.js code or characte
 node --test prototype/body-mapping/test/*.test.mjs
 ```
 
-The adapter tests have no third-party runtime dependency.
+The adapter and posture tests have no third-party runtime dependency.
+
+Preview posture is intentionally separate from the SCC body document. Changing posture in the browser does not modify canonical body JSON.
 
 ## Files
 
 - `adapter.mjs` — SCC body data to disposable renderer parameters.
 - `renderer.mjs` — procedural gray-body renderer.
+- `posture.mjs` — dependency-free preview/runtime posture contract and transforms.
 - `app.mjs` — interactive preview wiring.
 - `index.html` — browser entry point.
 - `test/adapter.test.mjs` — adapter-boundary tests.
