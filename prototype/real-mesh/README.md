@@ -103,3 +103,12 @@ Canonical height and shoulder calibration are normalized against body-only bound
 It is the shared geometry foundation for future chest, waist, hip, neck, and limb circumference calibration.
 
 The module does not choose anatomical measurement levels; it only measures the contour at a supplied plane.
+
+
+## Coupled chest calibration
+
+When canonical shoulder breadth and chest circumference are both present, the prototype does not solve them independently.
+
+For every bust target candidate it re-solves shoulder breadth, re-selects the chest reference plane, and then measures chest circumference.
+
+A coarse renderer-weight scan finds local target brackets without assuming global monotonicity. Ambiguous or discontinuous solutions are reported instead of silently accepted.

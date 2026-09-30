@@ -32,6 +32,22 @@ export const MAKEHUMAN_MEASUREMENT_TARGETS = Object.freeze({
         "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/measure/measure-shoulder-dist-incr.target",
     }),
   }),
+  chestCircumferenceCm: Object.freeze({
+    modifier: "measure/measure-bust-circ-decr|incr",
+    calibrationStatus: "experimental-coupled-calibration",
+    decrease: Object.freeze({
+      path: "makehuman/data/targets/measure/measure-bust-circ-decr.target",
+      blobSha: "35d7905904790aee386dc6a1180de717f1d6cedf",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/measure/measure-bust-circ-decr.target",
+    }),
+    increase: Object.freeze({
+      path: "makehuman/data/targets/measure/measure-bust-circ-incr.target",
+      blobSha: "096e02648d0c4ff70989f2a78d7c590c60dc4ebb",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/measure/measure-bust-circ-incr.target",
+    }),
+  }),
 });
 
 export const MAKEHUMAN_SHAPE_PRIOR_TARGETS = Object.freeze({

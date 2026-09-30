@@ -61,6 +61,20 @@
           </label>
 
           <label class="control">
+            <span>Chest circumference</span>
+            <div class="control-row">
+              <input
+                id="chest-circumference"
+                type="range"
+                min="70"
+                max="120"
+                step="0.1"
+              />
+              <output id="chest-circumference-value"></output>
+            </div>
+          </label>
+
+          <label class="control">
             <span>Shape prior</span>
             <select id="shape-prior">
               <option value="neutral">neutral</option>
@@ -79,13 +93,15 @@
           <h2>Experimental renderer calibration</h2>
 
           <p class="note">
-            The canonical shoulder breadth above is solved to a renderer-local
-            MakeHuman target weight. The current landmark pair is provisional
-            and must be visually audited before this mapping becomes stable.
+            When shoulder breadth and chest circumference are both authored,
+            the prototype solves them as coupled renderer constraints. Every
+            chest candidate re-solves shoulder breadth before the chest contour
+            is measured. Renderer weights remain disposable and are never
+            serialized into Character Schema.
           </p>
 
           <pre id="shoulder-calibration-status">
-Loading experimental shoulder calibration…
+Loading experimental coupled calibration…
           </pre>
 
           <h2>Asset status</h2>

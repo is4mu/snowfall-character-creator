@@ -820,3 +820,16 @@ The MakeHuman adapter currently searches normalized body-height fractions `0.62.
 No MakeHuman measurement-index table is used.
 
 This stage measures geometry only. Renderer target calibration remains the next step.
+
+
+## Stage 9: coupled chest calibration
+
+SCC now treats chest circumference and shoulder breadth as interacting renderer constraints.
+
+See [Coupled Chest Circumference Calibration](coupled-chest-calibration.md).
+
+The pinned `measure-bust-circ` target is evaluated from immutable shape-prior geometry. Every chest candidate re-solves explicit shoulder breadth and re-runs the experimental chest reference-plane measurement.
+
+Because the chest response is not assumed globally monotonic, SCC uses a coarse scan to find local residual sign-change brackets and refines only one unambiguous bracket.
+
+Multiple solutions, unreachable values, invalid samples, and discontinuous brackets remain explicit failure states.

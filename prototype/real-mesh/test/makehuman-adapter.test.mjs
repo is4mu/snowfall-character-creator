@@ -108,12 +108,44 @@ test("first shoulder target pair is pinned to exact upstream assets", () => {
   );
 });
 
+test("chest target pair is pinned to exact upstream CC0 assets", () => {
+  const pair = MAKEHUMAN_MEASUREMENT_TARGETS.chestCircumferenceCm;
+
+  assert.equal(
+    pair.calibrationStatus,
+    "experimental-coupled-calibration",
+  );
+  assert.equal(
+    pair.decrease.blobSha,
+    "35d7905904790aee386dc6a1180de717f1d6cedf",
+  );
+  assert.equal(
+    pair.increase.blobSha,
+    "096e02648d0c4ff70989f2a78d7c590c60dc4ebb",
+  );
+  assert.match(
+    pair.decrease.url,
+    /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+  );
+  assert.match(
+    pair.increase.url,
+    /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+  );
+});
+
 test("adapter exposes only explicitly pinned target pairs", () => {
   const pair = getMakeHumanMeasurementTargetPair("shoulderBreadthCm");
+  const chest = getMakeHumanMeasurementTargetPair(
+    "chestCircumferenceCm",
+  );
 
   assert.equal(
     pair.modifier,
     "measure/measure-shoulder-dist-decr|incr",
+  );
+  assert.equal(
+    chest.modifier,
+    "measure/measure-bust-circ-decr|incr",
   );
   assert.throws(
     () => getMakeHumanMeasurementTargetPair("waistBreadthCm"),
@@ -168,15 +200,18 @@ test("calibration queue includes only supported authored measurements", () => {
   const fields = plan.calibrationQueue.map((item) => item.field);
 
   assert.equal(fields.includes("measurements.shoulderBreadthCm"), false);
-  assert.ok(fields.includes("measurements.chestCircumferenceCm"));
+  assert.equal(
+    fields.includes("measurements.chestCircumferenceCm"),
+    false,
+  );
   assert.ok(fields.includes("measurements.upperArmLengthCm"));
   assert.equal(fields.includes("measurements.chestDepthCm"), false);
 });
 
-test("prototype shoulder calibration is separated from pending calibration queue", () => {
+test("prototype calibrated measurements are separated from pending queue", () => {
   const plan = planMakeHumanMapping(body);
 
-  assert.equal(plan.prototypeCalibrations.length, 1);
+  assert.equal(plan.prototypeCalibrations.length, 2);
   assert.deepEqual(plan.prototypeCalibrations[0], {
     field: "measurements.shoulderBreadthCm",
     targetValue: 38,
@@ -184,6 +219,19 @@ test("prototype shoulder calibration is separated from pending calibration queue
     modifier: "measure/measure-shoulder-dist-decr|incr",
     calibrationContract: "scc-makehuman-shoulder-calibration-v0",
     landmarkStatus: "provisional-cc0-derived",
+  });
+  assert.deepEqual(plan.prototypeCalibrations[1], {
+    field: "measurements.chestCircumferenceCm",
+    targetValue: 88,
+    unit: "cm",
+    modifier: "measure/measure-bust-circ-decr|incr",
+    calibrationContract:
+      "scc-makehuman-coupled-chest-calibration-v0",
+    measurementContract: "scc-chest-reference-plane-v0",
+    dependencies: [
+      "measurements.heightCm",
+      "measurements.shoulderBreadthCm",
+    ],
   });
 });
 

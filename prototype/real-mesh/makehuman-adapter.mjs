@@ -18,8 +18,15 @@ export const MAKEHUMAN_FIELD_MAPPING = Object.freeze({
     landmarkStatus: "provisional-cc0-derived",
   },
   chestCircumferenceCm: {
-    status: "needs-calibration",
+    status: "prototype-calibrated",
     modifier: "measure/measure-bust-circ-decr|incr",
+    calibrationContract:
+      "scc-makehuman-coupled-chest-calibration-v0",
+    measurementContract: "scc-chest-reference-plane-v0",
+    dependencies: [
+      "measurements.heightCm",
+      "measurements.shoulderBreadthCm",
+    ],
   },
   underbustCircumferenceCm: {
     status: "needs-calibration",
@@ -164,14 +171,25 @@ export function planMakeHumanMapping(body) {
     }
 
     if (value !== null && mapping.status === "prototype-calibrated") {
-      prototypeCalibrations.push({
+      const calibration = {
         field: entry.field,
         targetValue: value,
         unit: field.endsWith("Deg") ? "deg" : field === "massKg" ? "kg" : "cm",
         modifier: mapping.modifier,
         calibrationContract: mapping.calibrationContract,
-        landmarkStatus: mapping.landmarkStatus,
-      });
+      };
+
+      if (mapping.landmarkStatus) {
+        calibration.landmarkStatus = mapping.landmarkStatus;
+      }
+      if (mapping.measurementContract) {
+        calibration.measurementContract = mapping.measurementContract;
+      }
+      if (mapping.dependencies) {
+        calibration.dependencies = [...mapping.dependencies];
+      }
+
+      prototypeCalibrations.push(calibration);
     }
   }
 
@@ -202,7 +220,7 @@ export function planMakeHumanMapping(body) {
     prototypeCalibrations,
     limitations: [
       "Shape prior is renderer-local initialization; explicit canonical measurements are applied after it and take precedence.",
-      "Canonical height is directly applied; shoulder breadth has only prototype-level calibration.",
+      "Canonical height is directly applied; shoulder breadth and chest circumference have prototype-level calibration only.",
       "Measurement modifier names are renderer-local calibration candidates, not canonical SCC fields.",
       "No MakeHuman application code is reused.",
       "No unsupported SCC measurement is silently approximated.",
