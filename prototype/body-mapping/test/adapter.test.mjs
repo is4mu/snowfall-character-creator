@@ -9,6 +9,13 @@ const explicitBody = {
   measurements: {
     heightCm: 170,
     shoulderBreadthCm: 40,
+    shoulderSlopeDeg: 12,
+    armLengthCm: 64.5,
+    upperArmLengthCm: 25,
+    forearmLengthCm: 22,
+    thighLengthCm: 41,
+    lowerLegLengthCm: 38,
+    handLengthCm: 17.5,
     chestCircumferenceCm: 92,
     chestBreadthCm: 31,
     chestDepthCm: 24,
@@ -78,6 +85,46 @@ test("shape prior only changes missing values", () => {
   );
 });
 
+test("explicit shoulder slope and limb segment lengths map directly", () => {
+  const result = mapBodyToRenderModel(explicitBody);
+
+  assert.equal(result.dimensions.shoulderSlopeDeg, 12);
+  assert.equal(result.dimensions.arms.upperLengthM, 0.25);
+  assert.equal(result.dimensions.arms.forearmLengthM, 0.22);
+  assert.equal(result.dimensions.legs.upperLengthM, 0.41);
+  assert.equal(result.dimensions.legs.lowerLengthM, 0.38);
+
+  for (const field of [
+    "measurements.shoulderSlopeDeg",
+    "measurements.upperArmLengthCm",
+    "measurements.forearmLengthCm",
+    "measurements.thighLengthCm",
+    "measurements.lowerLegLengthCm",
+  ]) {
+    assert.equal(result.fallbackFields.includes(field), false);
+  }
+});
+
+test("partial limb segment input reports only the missing segment", () => {
+  const measurements = {...explicitBody.measurements};
+  delete measurements.forearmLengthCm;
+
+  const result = mapBodyToRenderModel({
+    ...explicitBody,
+    measurements,
+  });
+
+  assert.equal(
+    result.fallbackFields.includes("measurements.upperArmLengthCm"),
+    false,
+  );
+  assert.equal(
+    result.fallbackFields.includes("measurements.forearmLengthCm"),
+    true,
+  );
+  assert.equal(result.dimensions.arms.upperLengthM, 0.25);
+});
+
 test("explicit breadth and depth map directly to renderer cross-sections", () => {
   const result = mapBodyToRenderModel(explicitBody);
 
@@ -135,7 +182,14 @@ test("composition metadata does not rewrite explicit anthropometric dimensions",
 test("does not pretend underdetermined surface shape is solved", () => {
   const result = mapBodyToRenderModel(explicitBody);
 
-  assert.ok(result.unresolvedShapeDimensions.includes("shoulderSlope"));
+  assert.equal(
+    result.unresolvedShapeDimensions.includes("shoulderSlope"),
+    false,
+  );
+  assert.equal(
+    result.unresolvedShapeDimensions.includes("upperToLowerLimbSegmentRatios"),
+    false,
+  );
   assert.equal(
     result.unresolvedShapeDimensions.includes("torsoCrossSectionProfile"),
     false,
