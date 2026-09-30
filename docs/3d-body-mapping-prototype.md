@@ -97,7 +97,8 @@ The current UI exposes:
 
 - shape prior;
 - height;
-- shoulder breadth;
+- shoulder breadth and shoulder slope;
+- upper-arm, forearm, thigh, and lower-leg segment lengths;
 - chest circumference, breadth, and depth;
 - waist circumference, breadth, and depth;
 - hip circumference, breadth, and buttock depth;
@@ -128,8 +129,6 @@ The adapter currently makes explicit fallback assumptions for:
 
 - body measurements omitted from the character;
 - torso width/depth aspect ratios only when explicit breadth/depth are absent;
-- upper/lower leg length split;
-- upper-arm/forearm length split;
 - head proportions;
 - soft-tissue effect on torso depth;
 - muscle effect on limb thickness.
@@ -157,13 +156,11 @@ Body Model v1 now includes:
 
 The adapter uses these explicit measurements whenever present. Width/depth aspect ratios are now fallback assumptions only for incomplete characters.
 
-### 2. Shoulder breadth does not determine shoulder slope
+### 2. Shoulder breadth does not determine shoulder slope — addressed
 
-`shoulderBreadthCm` determines horizontal span but not the vertical slope from neck to shoulder.
+`shoulderBreadthCm` determines horizontal span but not the vertical drop from the neck-side shoulder root to the lateral shoulder.
 
-A renderer has to invent this.
-
-A future semantic parameter could be a physical shoulder-slope angle or a landmark height difference, if the 3D prototype proves it materially affects recognizable body shape.
+Body Model v1 now includes `shoulderSlopeDeg`, defined as a symmetric downward shoulder-line angle from horizontal. The procedural renderer uses it to lower the lateral shoulder and slope the top torso ring.
 
 ### 3. Circumference does not determine chest/breast projection
 
@@ -179,16 +176,11 @@ A body can have the same hip circumference with different lateral breadth and po
 
 Buttock depth or a comparable physical depth measurement is therefore a strong candidate.
 
-### 5. Total limb length does not determine segment ratios
+### 5. Total limb length does not determine segment ratios — addressed
 
-`armLengthCm` and `inseamCm` do not uniquely determine:
+`armLengthCm` and `inseamCm` do not uniquely determine upper/lower limb proportions.
 
-- upper-arm versus forearm length;
-- thigh versus lower-leg length.
-
-The prototype currently uses fixed ratios.
-
-If visual testing shows this difference is important, landmark-based segment lengths should be added rather than renderer percentages.
+Body Model v1 now includes `upperArmLengthCm`, `forearmLengthCm`, `thighLengthCm`, and `lowerLegLengthCm`. When present, the adapter uses these directly. Fixed ratios are now fallback behavior only for incomplete characters.
 
 ### 6. Head circumference does not define head shape
 
@@ -265,15 +257,22 @@ The goal is the minimum stable semantic model, not maximum shape control in the 
 - `hipBreadthCm`;
 - `buttockDepthCm`.
 
-### Medium-confidence candidates
+### Implemented from the second prototype
 
-These should be tested visually before being frozen:
+- `shoulderSlopeDeg`;
+- `upperArmLengthCm`;
+- `forearmLengthCm`;
+- `thighLengthCm`;
+- `lowerLegLengthCm`.
 
-- upper-arm length;
-- forearm length;
-- thigh segment length;
-- lower-leg segment length;
-- shoulder slope measurement.
+### Remaining candidates
+
+These still need further validation before being frozen:
+
+- local chest/breast projection beyond gross chest depth;
+- local abdomen projection;
+- local glute contour beyond buttock depth;
+- regional muscle distribution.
 
 ### Defer to another model
 
@@ -302,6 +301,6 @@ A new body field should be added only when all are true:
 
 The recommended follow-up is not a production UI.
 
-The breadth/depth refinement has now been applied. The next prototype pass should focus on the remaining ambiguous dimensions: shoulder slope, limb segment ratios, local chest/glute projection, posture, and regional muscle distribution.
+The breadth/depth, shoulder-slope, and limb-segment refinements have now been applied. The next prototype pass should focus on local surface projection/distribution and decide whether posture belongs in the body model at all.
 
 The project should still avoid choosing the long-term 3D/UI stack until those semantic boundaries are clearer.
