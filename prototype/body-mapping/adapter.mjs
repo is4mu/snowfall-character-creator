@@ -81,6 +81,24 @@ const PRIOR_RATIOS = {
   },
 };
 
+const SURFACE_POLICY = {
+  neutral: {
+    chestAnteriorShare: 0.52,
+    abdomenAnteriorShare: 0.52,
+    glutePosteriorShare: 0.56,
+  },
+  masculine: {
+    chestAnteriorShare: 0.50,
+    abdomenAnteriorShare: 0.51,
+    glutePosteriorShare: 0.54,
+  },
+  feminine: {
+    chestAnteriorShare: 0.58,
+    abdomenAnteriorShare: 0.54,
+    glutePosteriorShare: 0.60,
+  },
+};
+
 function assertFinitePositive(value, name) {
   if (!Number.isFinite(value) || value <= 0) {
     throw new TypeError(`${name} must be a finite positive number`);
@@ -243,7 +261,8 @@ export function mapBodyToRenderModel(body) {
 
   const shapePrior = body.shapePrior ?? "neutral";
   const prior = PRIOR_RATIOS[shapePrior];
-  if (!prior) {
+  const surfacePolicy = SURFACE_POLICY[shapePrior];
+  if (!prior || !surfacePolicy) {
     throw new TypeError(`Unsupported shapePrior: ${shapePrior}`);
   }
 
@@ -328,6 +347,15 @@ export function mapBodyToRenderModel(body) {
       shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
   });
 
+  const abdominalDepthCm =
+    Number.isFinite(measurements.abdominalDepthCm) &&
+    measurements.abdominalDepthCm > 0
+      ? measurements.abdominalDepthCm
+      : waist.halfDepthM * 2 * 100 * 1.08;
+  if (!Number.isFinite(measurements.abdominalDepthCm)) {
+    fallbackFields.push("measurements.abdominalDepthCm");
+  }
+
   for (const [section, breadthField, depthField] of [
     [chest, "measurements.chestBreadthCm", "measurements.chestDepthCm"],
     [waist, "measurements.waistBreadthCm", "measurements.waistDepthCm"],
@@ -401,6 +429,9 @@ export function mapBodyToRenderModel(body) {
         chestHalfDepthM: chest.halfDepthM,
         waistHalfWidthM: waist.halfWidthM,
         waistHalfDepthM: waist.halfDepthM,
+        abdomenHalfWidthM:
+          waist.halfWidthM * 0.6 + chest.halfWidthM * 0.4,
+        abdomenHalfDepthM: cmToM(abdominalDepthCm) / 2,
         hipHalfWidthM: hip.halfWidthM,
         hipHalfDepthM: hip.halfDepthM,
       },
@@ -434,11 +465,19 @@ export function mapBodyToRenderModel(body) {
       softTissueScale,
       muscleScale,
     },
+    rendererLocalSurface: {
+      contract: "scc-procedural-surface-v0",
+      chestAnteriorShare: surfacePolicy.chestAnteriorShare,
+      abdomenAnteriorShare: surfacePolicy.abdomenAnteriorShare,
+      glutePosteriorShare: surfacePolicy.glutePosteriorShare,
+      note:
+        "Renderer-local front/back distribution policy. These values are recomputed and are not canonical Character Schema fields.",
+    },
     unresolvedShapeDimensions: [
       "torsoCrossSectionProfileBeyondBreadthDepth",
-      "chestOrBreastProjection",
-      "abdomenProjection",
-      "gluteProjection",
+      "chestSurfaceDistributionBeyondGrossDepth",
+      "abdomenSurfaceDistributionBeyondDepth",
+      "gluteSurfaceDistributionBeyondGrossDepth",
       "posture",
       "leftRightAsymmetry",
       "regionalMuscleDistribution",
