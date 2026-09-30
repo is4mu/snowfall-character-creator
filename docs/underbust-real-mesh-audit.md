@@ -198,3 +198,38 @@ The reference plane must be derived from renderer-independent surface geometry a
 Only after that reference contract survives a pinned real-mesh audit should the project implement a coupled underbust/chest/shoulder solver.
 
 A generalized multi-constraint solver remains a likely future direction, but this audit alone is not sufficient reason to introduce it before waist/hip interaction evidence exists.
+
+
+## Anterior-profile follow-up
+
+The circumference-only audit did not establish a stable underbust landmark, so the next audit layer records additional axis-neutral geometry for each selected torso loop:
+
+- X/Z bounds;
+- breadth and depth;
+- positive-Z extent from body center;
+- negative-Z extent from body center;
+- centimeter-normalized forms.
+
+The generic sampler deliberately does not assign anatomical meaning to either Z direction.
+
+For the pinned MakeHuman adapter audit only, upstream documentation at the pinned commit states that the default model faces along positive Z:
+
+```text
+path:
+makehuman/data/povray/makehuman_facegroup_documentation.pov
+
+blob:
+cb7da1d84de32cef9d6d3d7a3c87bb6787f09835
+```
+
+Therefore the pinned audit may interpret positive-Z extent as **adapter-local anterior extent** when reviewing the generated JSON.
+
+This coordinate convention is diagnostic renderer knowledge. It is not Character Schema data and must not become part of SCC's portable body semantics.
+
+### Acceptance question
+
+The next pinned audit should determine whether the below-chest anterior profile contains a reproducible geometric cue for the lower boundary of meaningful chest/breast projection.
+
+No reference plane is selected automatically in this stage.
+
+If the cue is not stable across representative priors, the future underbust contract must return `no-stable-landmark` rather than using circumference minima, target influence, or a fixed height fraction as a guess.
