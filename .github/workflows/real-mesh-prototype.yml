@@ -34,6 +34,8 @@ jobs:
 
       - name: Check JavaScript module syntax
         run: |
+          node --check prototype/real-mesh/audit/pinned-asset-loader.mjs
+          node --check prototype/real-mesh/audit/pinned-real-mesh-audit.mjs
           node --check prototype/real-mesh/body-cross-section.mjs
           node --check prototype/real-mesh/chest-reference-plane.mjs
           node --check prototype/real-mesh/asset-manifest.mjs
