@@ -262,41 +262,53 @@
       ],
       "properties": {
         "model": {
-          "const": "scc-core-v1",
-          "description": "Canonical personality trait model used by this schema revision."
+          "const": "scc-personality-v1",
+          "description": "Canonical Snowfall Character Creator personality model used by this schema revision."
         },
         "traits": {
           "type": "object",
           "additionalProperties": false,
           "required": [
             "openness",
-            "conscientiousness",
-            "extraversion",
-            "agreeableness",
-            "emotionalStability"
+            "selfRegulation",
+            "social",
+            "interpersonal",
+            "integrity",
+            "emotional",
+            "behavioral",
+            "attachment"
           ],
           "properties": {
             "openness": {
-              "$ref": "#/$defs/trait01"
+              "$ref": "#/$defs/personalityOpenness"
             },
-            "conscientiousness": {
-              "$ref": "#/$defs/trait01"
+            "selfRegulation": {
+              "$ref": "#/$defs/personalitySelfRegulation"
             },
-            "extraversion": {
-              "$ref": "#/$defs/trait01"
+            "social": {
+              "$ref": "#/$defs/personalitySocial"
             },
-            "agreeableness": {
-              "$ref": "#/$defs/trait01"
+            "interpersonal": {
+              "$ref": "#/$defs/personalityInterpersonal"
             },
-            "emotionalStability": {
-              "$ref": "#/$defs/trait01"
+            "integrity": {
+              "$ref": "#/$defs/personalityIntegrity"
+            },
+            "emotional": {
+              "$ref": "#/$defs/personalityEmotional"
+            },
+            "behavioral": {
+              "$ref": "#/$defs/personalityBehavioral"
+            },
+            "attachment": {
+              "$ref": "#/$defs/personalityAttachment"
             }
           }
         },
         "description": {
           "type": "string",
           "maxLength": 2000,
-          "description": "Optional human-readable interpretation. It is not the source of truth for trait values."
+          "description": "Optional human-readable interpretation. It is derived commentary and is not the source of truth for trait values."
         }
       }
     },
@@ -304,7 +316,7 @@
       "type": "number",
       "minimum": 0,
       "maximum": 1,
-      "description": "Normalized trait value where 0 and 1 represent opposite ends of the documented dimension."
+      "description": "Normalized canonical personality trait value. Endpoint meanings are defined by the containing trait."
     },
     "background": {
       "type": "object",
@@ -429,6 +441,228 @@
           }
         }
       }
+    },
+    "personalityOpenness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intellectualCuriosity",
+        "creativeImagination",
+        "aestheticSensitivity",
+        "unconventionality"
+      ],
+      "properties": {
+        "intellectualCuriosity": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = prefers familiar/practical information; 1 = strongly seeks ideas, explanations, and knowledge."
+        },
+        "creativeImagination": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = primarily concrete and literal; 1 = readily forms imaginative, hypothetical, or fictional possibilities."
+        },
+        "aestheticSensitivity": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = relatively little response to aesthetic qualities; 1 = strongly notices and values beauty, style, art, or atmosphere."
+        },
+        "unconventionality": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = prefers familiar norms and established approaches; 1 = comfortable exploring unusual ideas, perspectives, or ways of doing things."
+        }
+      },
+      "description": "How the character engages with ideas, imagination, aesthetics, and unconventional possibilities."
+    },
+    "personalitySelfRegulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orderliness",
+        "diligence",
+        "deliberation"
+      ],
+      "properties": {
+        "orderliness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = comfortable with loose structure and disorder; 1 = strongly prefers organization, routines, and structured environments."
+        },
+        "diligence": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = tends to conserve effort or disengage sooner; 1 = sustains effort and follows tasks through despite difficulty or boredom."
+        },
+        "deliberation": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = decides quickly with less forethought; 1 = habitually considers consequences and alternatives before acting."
+        }
+      },
+      "description": "How the character structures tasks, sustains effort, and regulates decisions."
+    },
+    "personalitySocial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sociability",
+        "assertiveness",
+        "socialConfidence",
+        "activityLevel",
+        "emotionalExpressiveness"
+      ],
+      "properties": {
+        "sociability": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = prefers solitude or limited social contact; 1 = strongly seeks and enjoys frequent social interaction."
+        },
+        "assertiveness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = tends to yield, defer, or avoid taking the lead; 1 = readily states needs, takes initiative, and influences group direction."
+        },
+        "socialConfidence": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = easily self-conscious or hesitant in social exposure; 1 = comfortable being seen, evaluated, or interacting with unfamiliar people."
+        },
+        "activityLevel": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = prefers a slower, lower-activity pace; 1 = naturally energetic, busy, and inclined toward frequent activity."
+        },
+        "emotionalExpressiveness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = emotions are less outwardly visible or verbalized; 1 = feelings are readily shown through words, face, tone, or behavior."
+        }
+      },
+      "description": "How the character approaches social contact, visibility, initiative, energy, and outward emotional expression."
+    },
+    "personalityInterpersonal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "empathy",
+        "compassion",
+        "trust",
+        "forgiveness",
+        "respectfulness"
+      ],
+      "properties": {
+        "empathy": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = less spontaneously attuned to others' perspectives and feelings; 1 = readily notices and understands others' emotional perspectives."
+        },
+        "compassion": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = less automatically motivated to relieve others' distress; 1 = strongly inclined to care for and help people who are struggling."
+        },
+        "trust": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = cautious and skeptical about others' intentions; 1 = readily assumes goodwill until evidence suggests otherwise."
+        },
+        "forgiveness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = grievances tend to persist and trust is slow to restore; 1 = resentment fades more readily and cooperation can resume after repair."
+        },
+        "respectfulness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = more blunt or willing to disregard etiquette and interpersonal boundaries; 1 = strongly attentive to courtesy, consent, and others' boundaries."
+        }
+      },
+      "description": "How the character understands, treats, and restores relationships with other people."
+    },
+    "personalityIntegrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sincerity",
+        "fairness",
+        "statusMotivation"
+      ],
+      "properties": {
+        "sincerity": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = more willing to manage impressions strategically or manipulate for advantage; 1 = strongly prefers genuine, non-manipulative interaction."
+        },
+        "fairness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = more willing to exploit unfair opportunities for gain; 1 = strongly avoids cheating, exploitation, and taking unfair advantage."
+        },
+        "statusMotivation": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = relatively indifferent to prestige, rank, luxury signals, and recognition; 1 = strongly motivated by visible success, prestige, rank, or social recognition."
+        }
+      },
+      "description": "Stable tendencies around genuineness, fairness, and the motivational pull of social status."
+    },
+    "personalityEmotional": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anxietySensitivity",
+        "irritability",
+        "sadnessSensitivity",
+        "moodVolatility",
+        "recoverySpeed"
+      ],
+      "properties": {
+        "anxietySensitivity": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = rarely enters anticipatory worry or threat-focused states; 1 = readily experiences worry, apprehension, and threat sensitivity."
+        },
+        "irritability": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = slow to become annoyed or angry; 1 = frustration and anger are triggered relatively easily."
+        },
+        "sadnessSensitivity": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = less prone to sadness after disappointment, rejection, or loss; 1 = strongly affected by disappointment, rejection, or loss."
+        },
+        "moodVolatility": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = affect tends to change gradually and remain stable; 1 = mood can shift rapidly or intensely in response to events."
+        },
+        "recoverySpeed": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = strong emotions tend to linger; 1 = returns toward emotional baseline relatively quickly after an emotional event."
+        }
+      },
+      "description": "Baseline tendencies in negative affect, emotional variability, and return toward baseline."
+    },
+    "personalityBehavioral": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rewardSensitivity",
+        "sensationSeeking",
+        "emotionalUrgency"
+      ],
+      "properties": {
+        "rewardSensitivity": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = immediate rewards, praise, and anticipated pleasure exert a weaker pull; 1 = strongly approaches opportunities associated with reward or positive reinforcement."
+        },
+        "sensationSeeking": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = prefers familiar, lower-intensity stimulation; 1 = actively seeks novelty, excitement, intensity, and stimulating experiences."
+        },
+        "emotionalUrgency": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = usually retains behavioral control during intense emotion; 1 = more likely to act rashly when emotions are very strong, whether positive or negative."
+        }
+      },
+      "description": "Action-oriented tendencies that shape approach behavior and impulsive responding."
+    },
+    "personalityAttachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attachmentAnxiety",
+        "attachmentAvoidance"
+      ],
+      "properties": {
+        "attachmentAnxiety": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = relatively secure about close others' availability; 1 = strongly sensitive to rejection or abandonment and more likely to seek reassurance."
+        },
+        "attachmentAvoidance": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = comfortable with closeness, disclosure, and relying on close others; 1 = strongly prefers emotional distance, self-reliance, or reduced intimacy."
+        }
+      },
+      "description": "Close-relationship tendencies represented dimensionally rather than as attachment-style categories."
     }
   }
 }
