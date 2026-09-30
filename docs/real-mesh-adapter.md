@@ -794,3 +794,16 @@ anthropometrySurface = OBJ group "body"
 No algorithm may silently fall back to all source vertices.
 
 This rule is a prerequisite for the upcoming renderer-independent horizontal cross-section engine for chest, waist, and hip circumference.
+
+
+## Stage 7: generic body cross-section engine
+
+SCC now has a renderer-independent geometry layer for circumference measurements.
+
+See [Body Surface Cross-Section Measurement](body-cross-section.md).
+
+The engine slices explicit body triangles with a horizontal plane, assembles closed contour loops, selects the central torso loop when requested, and normalizes perimeter to centimeters using body-only height.
+
+It intentionally does not yet choose the semantic chest/waist/hip plane.
+
+That field-specific logic is the next calibration stage.
