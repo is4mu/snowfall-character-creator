@@ -112,3 +112,18 @@ When canonical shoulder breadth and chest circumference are both present, the pr
 For every bust target candidate it re-solves shoulder breadth, re-selects the chest reference plane, and then measures chest circumference.
 
 A coarse renderer-weight scan finds local target brackets without assuming global monotonicity. Ambiguous or discontinuous solutions are reported instead of silently accepted.
+
+
+## Pinned integration audit
+
+Real upstream asset compatibility is verified separately from normal PR CI.
+
+Run:
+
+```bash
+node prototype/real-mesh/audit/pinned-real-mesh-audit.mjs
+```
+
+The audit verifies every downloaded asset by Git blob SHA before parsing it, then exercises coupled chest/shoulder calibration on feminine, neutral, and masculine shape priors.
+
+See [Pinned Real Mesh Integration Audit](../../docs/pinned-real-mesh-audit.md).
