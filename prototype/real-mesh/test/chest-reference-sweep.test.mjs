@@ -44,7 +44,9 @@ test("detects a chest reference jump larger than one normal sample step", () => 
   assert.equal(jumps.length, 1);
   assert.equal(jumps[0].leftMeasuredChestCm, 90.4);
   assert.equal(jumps[0].rightMeasuredChestCm, 91.0);
-  assert.equal(jumps[0].deltaHeightFraction, -0.03);
+  assert.ok(
+    Math.abs(jumps[0].deltaHeightFraction - (-0.03)) < 1e-12,
+  );
 });
 
 test("one-step drift is not treated as discontinuous switching", () => {
