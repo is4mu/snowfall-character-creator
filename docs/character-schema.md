@@ -98,7 +98,7 @@ The core schema does not need a universal taxonomy of gender to identify or rend
 
 ## Body
 
-Body data uses the versioned `scc-body-v1` model.
+Body data uses the versioned `scc-body-v1` model. Its current field inventory is a freeze candidate for the first real human-mesh adapter; the overall Character Schema remains `1.0.0-draft.1`.
 
 The model separates:
 
@@ -117,7 +117,7 @@ Regional clothing sizes, shoe sizes, bra sizes, renderer morph weights, and mesh
 
 `abdominalDepthCm` is canonical because it is a physical depth measurement. Local chest, abdomen, and glute front/back distribution remains renderer-local; subjective morph sliders are not persisted until stable renderer-independent semantics exist. Posture is explicitly outside Body Model v1 and belongs to preview/runtime state unless a future habitual-posture model is separately designed. Asymmetry and regional muscle distribution remain deferred.
 
-See [Body Model v1](body-model.md), [Surface Shape Boundary](surface-shape-boundary.md), and [Posture Boundary](posture-boundary.md) for the current body/renderer ownership rules.
+See [Body Model v1](body-model.md), [Body Measurement Protocol v1](body-measurement-protocol.md), [Surface Shape Boundary](surface-shape-boundary.md), and [Posture Boundary](posture-boundary.md) for the current body/renderer ownership rules.
 
 ## Appearance
 
