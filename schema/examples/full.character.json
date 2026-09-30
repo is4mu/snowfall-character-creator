@@ -51,15 +51,56 @@
     ]
   },
   "personality": {
-    "model": "scc-core-v1",
+    "model": "scc-personality-v1",
     "traits": {
-      "openness": 0.61,
-      "conscientiousness": 0.67,
-      "extraversion": 0.46,
-      "agreeableness": 0.74,
-      "emotionalStability": 0.58
+      "openness": {
+        "intellectualCuriosity": 0.64,
+        "creativeImagination": 0.55,
+        "aestheticSensitivity": 0.73,
+        "unconventionality": 0.43
+      },
+      "selfRegulation": {
+        "orderliness": 0.68,
+        "diligence": 0.72,
+        "deliberation": 0.69
+      },
+      "social": {
+        "sociability": 0.56,
+        "assertiveness": 0.38,
+        "socialConfidence": 0.52,
+        "activityLevel": 0.57,
+        "emotionalExpressiveness": 0.61
+      },
+      "interpersonal": {
+        "empathy": 0.78,
+        "compassion": 0.8,
+        "trust": 0.62,
+        "forgiveness": 0.66,
+        "respectfulness": 0.83
+      },
+      "integrity": {
+        "sincerity": 0.81,
+        "fairness": 0.87
+      },
+      "emotional": {
+        "anxietyProneness": 0.49,
+        "irritability": 0.34,
+        "sadnessProneness": 0.52,
+        "moodVolatility": 0.42,
+        "recoverySpeed": 0.63
+      },
+      "behavioral": {
+        "statusMotivation": 0.35,
+        "rewardSensitivity": 0.58,
+        "sensationSeeking": 0.4,
+        "emotionalUrgency": 0.31
+      },
+      "attachment": {
+        "attachmentAnxiety": 0.44,
+        "attachmentAvoidance": 0.28
+      }
     },
-    "description": "Warm and approachable, somewhat reserved at first, with a practical streak."
+    "description": "Warm and considerate, moderately social, careful before acting, and more interested in stable relationships than status or intense stimulation."
   },
   "background": {
     "summary": "A contemporary fictional character used to exercise the draft schema.",
