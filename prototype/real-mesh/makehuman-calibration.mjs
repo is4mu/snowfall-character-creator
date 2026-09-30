@@ -123,6 +123,7 @@ export function solveShoulderBreadthTarget({
       increaseDeltas,
       weight,
       canonicalHeightCm,
+      heightVertexIndices,
     });
     const residualCm = current.measuredCm - targetShoulderBreadthCm;
 
