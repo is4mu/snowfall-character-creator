@@ -48,6 +48,24 @@ export const MAKEHUMAN_MEASUREMENT_TARGETS = Object.freeze({
         "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/measure/measure-bust-circ-incr.target",
     }),
   }),
+  underbustCircumferenceCm: Object.freeze({
+    modifier: "measure/measure-underbust-circ-decr|incr",
+    calibrationStatus: "audit-only",
+    note:
+      "Pinned for semantic/coupling investigation only. This does not claim SCC underbust calibration support.",
+    decrease: Object.freeze({
+      path: "makehuman/data/targets/measure/measure-underbust-circ-decr.target",
+      blobSha: "a56df665893fee096d6ecc3f1909dbe787b02cfc",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/measure/measure-underbust-circ-decr.target",
+    }),
+    increase: Object.freeze({
+      path: "makehuman/data/targets/measure/measure-underbust-circ-incr.target",
+      blobSha: "10e2e822fbee0eeeabf35cb5f4e3305923e4e7ec",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/measure/measure-underbust-circ-incr.target",
+    }),
+  }),
 });
 
 export const MAKEHUMAN_SHAPE_PRIOR_TARGETS = Object.freeze({
