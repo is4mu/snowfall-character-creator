@@ -308,6 +308,10 @@
             "lowerLegLengthCm": {
               "$ref": "#/$defs/bodyMeasurementCm",
               "description": "Lower-leg segment length from the knee landmark to the ankle landmark."
+            },
+            "abdominalDepthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Maximum front-to-back abdominal depth at the documented abdominal landmark. Distinct from waistDepthCm and intended as a physical anthropometric measurement."
             }
           },
           "description": "Renderer-independent anthropometric measurements. Field names carry canonical metric units."
