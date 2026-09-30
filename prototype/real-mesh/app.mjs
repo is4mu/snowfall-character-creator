@@ -296,8 +296,22 @@ async function loadRealMesh() {
       "position",
       new THREE.Float32BufferAttribute(parsed.positions, 3),
     );
-    bodyTriangles = getObjGroupTriangles(parsed, "body");
+    bodyTriangles = getObjGroupTriangles(
+      parsed,
+      MAKEHUMAN_ASSET_MANIFEST.anthropometryGroup,
+    );
     bodyVertexIndices = collectTriangleVertexIndices(bodyTriangles);
+
+    if (
+      bodyVertexIndices.length !==
+        MAKEHUMAN_ASSET_MANIFEST.expectedBodyVertexCount ||
+      bodyTriangles.length / 3 !==
+        MAKEHUMAN_ASSET_MANIFEST.expectedBodyTriangleCount
+    ) {
+      throw new Error(
+        "Pinned MakeHuman body group structure does not match the adapter manifest",
+      );
+    }
     geometry.setIndex(new THREE.BufferAttribute(bodyTriangles, 1));
     geometry.computeVertexNormals();
 
@@ -336,7 +350,7 @@ async function loadRealMesh() {
         bodyTriangleCount: bodyTriangles.length / 3,
         bodyVertexCount: bodyVertexIndices.length,
         stableSourceVertexIndices: true,
-        anthropometryGroup: "body",
+        anthropometryGroup: MAKEHUMAN_ASSET_MANIFEST.anthropometryGroup,
         nativeBodyHeightUnits: currentBodyBounds.height,
         shapePriorAssets: {
           contract: MAKEHUMAN_SHAPE_PRIOR_TARGETS.contract,
