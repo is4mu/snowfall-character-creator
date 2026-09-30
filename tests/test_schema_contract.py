@@ -134,6 +134,7 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "footBreadthCm",
             "headCircumferenceCm",
         }
+        self.assertEqual(len(expected_measurements), 35)
         self.assertEqual(
             set(body_def["properties"]["measurements"]["properties"]),
             expected_measurements,
