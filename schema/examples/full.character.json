@@ -30,7 +30,7 @@
       "thighCircumferenceCm": 52,
       "calfCircumferenceCm": 35,
       "ankleCircumferenceCm": 21,
-      "armLengthCm": 58,
+      "armLengthCm": 64.5,
       "inseamCm": 74,
       "handLengthCm": 17.5,
       "handBreadthCm": 7.5,
@@ -42,7 +42,12 @@
       "waistBreadthCm": 25.5,
       "waistDepthCm": 19.5,
       "hipBreadthCm": 34,
-      "buttockDepthCm": 24
+      "buttockDepthCm": 24,
+      "shoulderSlopeDeg": 12,
+      "upperArmLengthCm": 25,
+      "forearmLengthCm": 22,
+      "thighLengthCm": 39,
+      "lowerLegLengthCm": 35
     },
     "composition": {
       "bodyFatFraction": 0.26,

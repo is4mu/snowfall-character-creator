@@ -23,6 +23,7 @@ const PRIOR_RATIOS = {
     footLength: 0.15,
     footBreadth: 0.057,
     headCircumference: 0.33,
+    shoulderSlopeDeg: 12,
     bodyFatFraction: 0.22,
     muscularity: 0.40,
   },
@@ -48,6 +49,7 @@ const PRIOR_RATIOS = {
     footLength: 0.153,
     footBreadth: 0.059,
     headCircumference: 0.335,
+    shoulderSlopeDeg: 10,
     bodyFatFraction: 0.18,
     muscularity: 0.50,
   },
@@ -73,6 +75,7 @@ const PRIOR_RATIOS = {
     footLength: 0.147,
     footBreadth: 0.055,
     headCircumference: 0.325,
+    shoulderSlopeDeg: 14,
     bodyFatFraction: 0.26,
     muscularity: 0.35,
   },
@@ -190,6 +193,49 @@ function circumferenceRadius(circumferenceCm, multiplier = 1) {
   return equivalentRadiusFromCircumference(cmToM(circumferenceCm)) * multiplier;
 }
 
+function resolveSegmentPair({
+  measurements,
+  firstField,
+  secondField,
+  availableCm,
+  firstRatio,
+  fallbackFields,
+}) {
+  const first = measurements[firstField];
+  const second = measurements[secondField];
+  const hasFirst = Number.isFinite(first) && first > 0;
+  const hasSecond = Number.isFinite(second) && second > 0;
+
+  if (hasFirst && hasSecond) {
+    return { firstCm: first, secondCm: second };
+  }
+
+  if (hasFirst) {
+    fallbackFields.push(`measurements.${secondField}`);
+    return {
+      firstCm: first,
+      secondCm: Math.max(1, availableCm - first),
+    };
+  }
+
+  if (hasSecond) {
+    fallbackFields.push(`measurements.${firstField}`);
+    return {
+      firstCm: Math.max(1, availableCm - second),
+      secondCm: second,
+    };
+  }
+
+  fallbackFields.push(
+    `measurements.${firstField}`,
+    `measurements.${secondField}`,
+  );
+  return {
+    firstCm: availableCm * firstRatio,
+    secondCm: availableCm * (1 - firstRatio),
+  };
+}
+
 export function mapBodyToRenderModel(body) {
   if (!body || body.model !== "scc-body-v1") {
     throw new TypeError("body.model must be scc-body-v1");
@@ -236,6 +282,13 @@ export function mapBodyToRenderModel(body) {
   const footLengthCm = get("footLengthCm", "footLength");
   const footBreadthCm = get("footBreadthCm", "footBreadth");
   const headCircumferenceCm = get("headCircumferenceCm", "headCircumference");
+
+  const shoulderSlopeDeg = Number.isFinite(measurements.shoulderSlopeDeg)
+    ? measurements.shoulderSlopeDeg
+    : prior.shoulderSlopeDeg;
+  if (!Number.isFinite(measurements.shoulderSlopeDeg)) {
+    fallbackFields.push("measurements.shoulderSlopeDeg");
+  }
 
   const bodyFatFraction = Number.isFinite(body.composition?.bodyFatFraction)
     ? clamp01(body.composition.bodyFatFraction)
@@ -299,14 +352,30 @@ export function mapBodyToRenderModel(body) {
     heightM - inseamM - headHeightM - neckHeightM - pelvisHeightM,
   );
 
-  const upperLegLengthM = inseamM * 0.53;
-  const lowerLegLengthM = inseamM * 0.47;
   const armLengthM = cmToM(armLengthCm);
   const handLengthM = cmToM(handLengthCm);
-  const upperArmLengthM = Math.max(0.12, (armLengthM - handLengthM) * 0.52);
-  const forearmLengthM = Math.max(0.11, (armLengthM - handLengthM) * 0.48);
+  const armSegments = resolveSegmentPair({
+    measurements,
+    firstField: "upperArmLengthCm",
+    secondField: "forearmLengthCm",
+    availableCm: Math.max(2, armLengthCm - handLengthCm),
+    firstRatio: 0.52,
+    fallbackFields,
+  });
+  const legSegments = resolveSegmentPair({
+    measurements,
+    firstField: "thighLengthCm",
+    secondField: "lowerLegLengthCm",
+    availableCm: Math.max(2, inseamCm),
+    firstRatio: 0.53,
+    fallbackFields,
+  });
+  const upperArmLengthM = cmToM(armSegments.firstCm);
+  const forearmLengthM = cmToM(armSegments.secondCm);
+  const upperLegLengthM = cmToM(legSegments.firstCm);
+  const lowerLegLengthM = cmToM(legSegments.secondCm);
 
-    return {
+  return {
     rendererContract: "scc-procedural-body-render-v0",
     sourceModel: body.model,
     shapePrior,
@@ -316,6 +385,7 @@ export function mapBodyToRenderModel(body) {
       armSpanM: cmToM(armSpanCm),
       sittingHeightM: cmToM(sittingHeightCm),
       shoulderBreadthM: cmToM(shoulderBreadthCm),
+      shoulderSlopeDeg,
       underbustCircumferenceM: cmToM(underbustCircumferenceCm),
       head: {
         heightM: headHeightM,
@@ -365,12 +435,10 @@ export function mapBodyToRenderModel(body) {
       muscleScale,
     },
     unresolvedShapeDimensions: [
-      "shoulderSlope",
       "torsoCrossSectionProfileBeyondBreadthDepth",
       "chestOrBreastProjection",
       "abdomenProjection",
       "gluteProjection",
-      "upperToLowerLimbSegmentRatios",
       "posture",
       "leftRightAsymmetry",
       "regionalMuscleDistribution",
