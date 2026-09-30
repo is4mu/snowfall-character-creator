@@ -368,3 +368,153 @@ Therefore a future continuity failure preserves:
 - underbust states.
 
 This avoids losing the evidence needed to refine the algorithm.
+
+
+## Final pinned acceptance result
+
+Final manual workflow:
+
+```text
+run: 36730512488
+head: 99cb850d4977a818ec48188a0bf948c45185e83c
+conclusion: success
+```
+
+The machine-readable acceptance gate reported:
+
+```text
+pairedThoraxChestContinuity.status = passed
+failures = []
+```
+
+### Feminine / 162 / shoulder 39 / 81 weights
+
+Legacy chest jumps:
+
+```text
+2
+```
+
+Refined thorax chest jumps:
+
+```text
+0
+```
+
+The refined chest reference remained exactly:
+
+```text
+0.73 body-height fraction
+```
+
+for all 81 sampled bust weights from -1 through +1.
+
+Representative refined measurements:
+
+```text
+weight -1 : 73.74 cm, chest 0.73, underbust 0.71
+weight  0 : 88.54 cm, chest 0.73, underbust 0.71
+weight +1 : 106.67 cm, chest 0.73, underbust 0.705
+```
+
+Underbust remained `selected` for all 81 samples with no detected transition.
+
+This resolves the manually observed feminine chest-reference switching that originally motivated the redesign.
+
+### Feminine / 162 / shoulder 38 control
+
+Legacy chest jumps:
+
+```text
+1
+```
+
+Refined thorax chest jumps:
+
+```text
+0
+```
+
+Chest remained at `0.73` for all 17 control samples.
+
+Underbust remained selected for all 17 samples.
+
+### Neutral / 162 / shoulder 38 control
+
+Refined thorax chest jumps:
+
+```text
+0
+```
+
+Chest remained within adjacent normal samples:
+
+```text
+0.725 .. 0.73
+```
+
+No >1-step discontinuity was detected.
+
+Underbust is less semantically stable:
+
+```text
+selected:             12 / 17
+no-stable-landmark:    5 / 17
+```
+
+A status transition occurs between renderer weights `0.375` and `0.5`, while chest remains at `0.73`.
+
+This is acceptable for the **chest** prototype because underbust existence no longer changes chest selection.
+
+### Masculine / 162 / shoulder 38 control
+
+Refined thorax chest jumps:
+
+```text
+0
+```
+
+Chest stays within:
+
+```text
+0.72 .. 0.73
+```
+
+with only normal one-sample drift.
+
+Underbust remains intentionally conservative and is not ready for production adoption:
+
+```text
+selected:              6 / 17
+no-stable-landmark:   11 / 17
+```
+
+The audit also observed an underbust fraction transition:
+
+```text
+0.69 -> 0.67
+```
+
+between renderer weights `-0.375` and `-0.25`.
+
+That is a 0.02 body-height-fraction change and must not be promoted into a production underbust calibration contract without further investigation.
+
+## Promotion decision
+
+The pinned evidence supports promoting the **new chest semantic rule** to the next integration stage:
+
+```text
+Chest = protocol-aligned anterior structural peak / anterior fallback
+```
+
+The evidence does **not** support promoting the paired underbust result at the same time.
+
+Therefore the next integration should:
+
+1. switch coupled chest calibration to the refined thorax chest reference;
+2. switch the blue browser measurement contour to the same chest reference;
+3. keep underbust experimental and independently guarded;
+4. rerun the 162 / 38 / 88 pinned solve;
+5. repeat manual side-view review before any underbust target-weight solver is introduced.
+
+This separation preserves the successful chest fix without overstating underbust confidence.
