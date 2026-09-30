@@ -52,3 +52,12 @@ The prototype fetches the pinned MakeHuman shoulder-distance decrease/increase t
 The value is **uncalibrated** and is not saved to SCC character data.
 
 Every change is reapplied from immutable base positions, then the mesh is refit to canonical SCC height.
+
+
+## Experimental shoulder calibration
+
+The canonical `shoulderBreadthCm` control now drives the pinned shoulder target pair through an SCC-owned mesh measurement and bisection solver.
+
+The renderer landmark pair is provisional and the mapping is not yet stable.
+
+The solved target weight is renderer-local only. If the requested centimeters are outside the target's reachable range, diagnostics report `out-of-range` instead of altering the canonical value.

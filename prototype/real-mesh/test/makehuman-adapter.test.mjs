@@ -52,7 +52,7 @@ test("asset manifest is pinned to a CC0 graphical asset source", () => {
 test("first shoulder target pair is pinned to exact upstream assets", () => {
   const pair = MAKEHUMAN_MEASUREMENT_TARGETS.shoulderBreadthCm;
 
-  assert.equal(pair.calibrationStatus, "uncalibrated");
+  assert.equal(pair.calibrationStatus, "experimental-calibration");
   assert.equal(
     pair.decrease.blobSha,
     "eb25c3214db91206340ba5e28fcd7f29fadae4a9",
@@ -98,7 +98,7 @@ test("measurement coverage is explicit instead of silently approximated", () => 
 
   assert.equal(
     byField.get("measurements.shoulderBreadthCm").status,
-    "needs-calibration",
+    "prototype-calibrated",
   );
   assert.equal(
     byField.get("measurements.abdominalDepthCm").status,
@@ -117,6 +117,7 @@ test("all frozen Body Model measurement fields have an adapter coverage state", 
     assert.ok(
       [
         "stage1-direct",
+        "prototype-calibrated",
         "needs-calibration",
         "unmapped",
         "unverified-upstream-candidate",
@@ -129,10 +130,24 @@ test("calibration queue includes only supported authored measurements", () => {
   const plan = planMakeHumanMapping(body);
   const fields = plan.calibrationQueue.map((item) => item.field);
 
-  assert.ok(fields.includes("measurements.shoulderBreadthCm"));
+  assert.equal(fields.includes("measurements.shoulderBreadthCm"), false);
   assert.ok(fields.includes("measurements.chestCircumferenceCm"));
   assert.ok(fields.includes("measurements.upperArmLengthCm"));
   assert.equal(fields.includes("measurements.chestDepthCm"), false);
+});
+
+test("prototype shoulder calibration is separated from pending calibration queue", () => {
+  const plan = planMakeHumanMapping(body);
+
+  assert.equal(plan.prototypeCalibrations.length, 1);
+  assert.deepEqual(plan.prototypeCalibrations[0], {
+    field: "measurements.shoulderBreadthCm",
+    targetValue: 38,
+    unit: "cm",
+    modifier: "measure/measure-shoulder-dist-decr|incr",
+    calibrationContract: "scc-makehuman-shoulder-calibration-v0",
+    landmarkStatus: "provisional-cc0-derived",
+  });
 });
 
 test("shapePrior seeds renderer morphology without identity input", () => {

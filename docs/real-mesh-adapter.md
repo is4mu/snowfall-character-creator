@@ -414,3 +414,131 @@ residual error
 ```
 
 The target pair should only move from `needs-calibration` to calibrated support after that loop has a clearly defined SCC-owned mesh measurement and test tolerance.
+
+
+## Stage 4: experimental shoulder-breadth calibration
+
+The first centimeter-driven real-mesh mapping is now implemented for:
+
+```text
+scc-body-v1.measurements.shoulderBreadthCm
+```
+
+The mapping remains **prototype-calibrated**, not stable support.
+
+### SCC-owned renderer landmarks
+
+The pinned CC0 base mesh was analyzed directly, without using MakeHuman's AGPL measurement implementation.
+
+The current adapter landmark pair is:
+
+```text
+left vertex  = 1357
+right vertex = 8049
+
+left base coordinate  = (-1.8990, 5.2051, 0.6451)
+right base coordinate = ( 1.8990, 5.2051, 0.6451)
+```
+
+The points are exact mirrors in the pinned base mesh and both are moved symmetrically by the pinned shoulder-distance target.
+
+They are stored as **renderer adapter metadata**, never Character Schema data.
+
+The adapter validates their pinned coordinates before calibration. If the asset changes incompatibly, calibration fails instead of silently using the wrong vertices.
+
+### Measurement
+
+SCC measures the renderer landmark X separation and converts raw mesh units into centimeters using the current mesh height:
+
+```text
+cm per raw unit = canonical heightCm / raw mesh height
+
+shoulder breadth cm =
+  abs(right.x - left.x) * cm per raw unit
+```
+
+This keeps shoulder measurement coupled to the canonical character stature rather than to undocumented MakeHuman units.
+
+### Pinned target range
+
+For the representative 162 cm character, direct analysis of the pinned CC0 target pair gives approximately:
+
+```text
+signed weight -1.0 -> 33.73 cm
+signed weight  0.0 -> 36.31 cm
+signed weight +1.0 -> 41.07 cm
+```
+
+The representative `shoulderBreadthCm = 38` is therefore reachable.
+
+### Solver
+
+`makehuman-calibration.mjs` uses a monotonic bisection solver over the renderer-local signed target weight `[-1, 1]`.
+
+Each evaluation:
+
+1. starts from immutable base positions;
+2. applies the selected decrease/increase CC0 target;
+3. measures shoulder breadth using SCC-owned landmarks;
+4. compares the result with canonical `shoulderBreadthCm`.
+
+The solver reports:
+
+- status;
+- target centimeters;
+- measured centimeters;
+- residual centimeters;
+- reachable centimeter range;
+- renderer-local target weight;
+- iteration count.
+
+### Out-of-range behavior
+
+If the requested canonical shoulder breadth lies outside the target pair's reachable range, the adapter does **not** pretend to satisfy it.
+
+It returns:
+
+```text
+status: out-of-range
+```
+
+and applies the closest renderer endpoint while preserving the canonical SCC value unchanged.
+
+This is an adapter limitation, not a reason to rewrite Character Schema.
+
+### Browser behavior
+
+The real-mesh browser prototype now exposes canonical `shoulderBreadthCm` next to canonical height.
+
+Changing either value reruns the solver and visibly updates the real mesh.
+
+The solved MakeHuman target weight remains diagnostics-only renderer state.
+
+### Why the status is still experimental
+
+The numeric solver and target behavior are testable, but the renderer landmark interpretation still requires visual/anatomical review.
+
+The current pair is therefore labeled:
+
+```text
+provisional-cc0-derived
+```
+
+and the field mapping is:
+
+```text
+prototype-calibrated
+```
+
+Stable support requires verifying that the selected surface points match SCC's intended lateral-shoulder/acromion-style landmark semantics across relevant body priors and deformations.
+
+### No AGPL measurement logic
+
+No MakeHuman Python measurement code or its measurement-index tables are copied.
+
+The calibration is based only on:
+
+- pinned CC0 base geometry;
+- pinned CC0 target deltas;
+- SCC-owned measurement semantics;
+- SCC-owned solver code.

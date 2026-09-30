@@ -12,8 +12,10 @@ export const MAKEHUMAN_FIELD_MAPPING = Object.freeze({
   armSpanCm: { status: "unmapped" },
   sittingHeightCm: { status: "unmapped" },
   shoulderBreadthCm: {
-    status: "needs-calibration",
+    status: "prototype-calibrated",
     modifier: "measure/measure-shoulder-dist-decr|incr",
+    calibrationContract: "scc-makehuman-shoulder-calibration-v0",
+    landmarkStatus: "provisional-cc0-derived",
   },
   chestCircumferenceCm: {
     status: "needs-calibration",
@@ -139,6 +141,7 @@ export function planMakeHumanMapping(body) {
   const measurements = body.measurements ?? {};
   const coverage = [];
   const calibrationQueue = [];
+  const prototypeCalibrations = [];
 
   for (const [field, mapping] of Object.entries(MAKEHUMAN_FIELD_MAPPING)) {
     const value = positiveNumberOrNull(measurements[field]);
@@ -155,6 +158,17 @@ export function planMakeHumanMapping(body) {
         targetValue: value,
         unit: field.endsWith("Deg") ? "deg" : field === "massKg" ? "kg" : "cm",
         modifier: mapping.modifier,
+      });
+    }
+
+    if (value !== null && mapping.status === "prototype-calibrated") {
+      prototypeCalibrations.push({
+        field: entry.field,
+        targetValue: value,
+        unit: field.endsWith("Deg") ? "deg" : field === "massKg" ? "kg" : "cm",
+        modifier: mapping.modifier,
+        calibrationContract: mapping.calibrationContract,
+        landmarkStatus: mapping.landmarkStatus,
       });
     }
   }
@@ -183,8 +197,9 @@ export function planMakeHumanMapping(body) {
     },
     coverage,
     calibrationQueue,
+    prototypeCalibrations,
     limitations: [
-      "Only canonical height is geometrically applied in stage 1.",
+      "Canonical height is directly applied; shoulder breadth has only prototype-level calibration.",
       "Measurement modifier names are renderer-local calibration candidates, not canonical SCC fields.",
       "No MakeHuman application code is reused.",
       "No unsupported SCC measurement is silently approximated.",

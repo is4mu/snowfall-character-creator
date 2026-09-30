@@ -15,7 +15,7 @@ export const MAKEHUMAN_ASSET_MANIFEST = Object.freeze({
 export const MAKEHUMAN_MEASUREMENT_TARGETS = Object.freeze({
   shoulderBreadthCm: Object.freeze({
     modifier: "measure/measure-shoulder-dist-decr|incr",
-    calibrationStatus: "uncalibrated",
+    calibrationStatus: "experimental-calibration",
     decrease: Object.freeze({
       path: "makehuman/data/targets/measure/measure-shoulder-dist-decr.target",
       blobSha: "eb25c3214db91206340ba5e28fcd7f29fadae4a9",
