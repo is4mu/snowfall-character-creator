@@ -146,7 +146,8 @@ function sectionFromMeasurements({
     return {
       halfWidthM: explicitBreadth / 2,
       halfDepthM: explicitDepth / 2,
-      usedExplicitCrossSection: true,
+      usedExplicitBreadth: true,
+      usedExplicitDepth: true,
     };
   }
 
@@ -156,7 +157,8 @@ function sectionFromMeasurements({
     return {
       halfWidthM: explicitBreadth / 2,
       halfDepthM: solveEllipseHalfDepth(circumferenceM, explicitBreadth / 2),
-      usedExplicitCrossSection: true,
+      usedExplicitBreadth: true,
+      usedExplicitDepth: false,
     };
   }
 
@@ -168,7 +170,8 @@ function sectionFromMeasurements({
     return {
       halfWidthM: solvedHalfWidth,
       halfDepthM: explicitDepth / 2,
-      usedExplicitCrossSection: true,
+      usedExplicitBreadth: false,
+      usedExplicitDepth: true,
     };
   }
 
@@ -178,7 +181,8 @@ function sectionFromMeasurements({
   return {
     halfWidthM: halfWidth,
     halfDepthM: halfDepth,
-    usedExplicitCrossSection: false,
+    usedExplicitBreadth: false,
+    usedExplicitDepth: false,
   };
 }
 
@@ -271,13 +275,16 @@ export function mapBodyToRenderModel(body) {
       shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
   });
 
-  for (const [section, fields] of [
-    [chest, ["measurements.chestBreadthCm", "measurements.chestDepthCm"]],
-    [waist, ["measurements.waistBreadthCm", "measurements.waistDepthCm"]],
-    [hip, ["measurements.hipBreadthCm", "measurements.buttockDepthCm"]],
+  for (const [section, breadthField, depthField] of [
+    [chest, "measurements.chestBreadthCm", "measurements.chestDepthCm"],
+    [waist, "measurements.waistBreadthCm", "measurements.waistDepthCm"],
+    [hip, "measurements.hipBreadthCm", "measurements.buttockDepthCm"],
   ]) {
-    if (!section.usedExplicitCrossSection) {
-      fallbackFields.push(...fields);
+    if (!section.usedExplicitBreadth) {
+      fallbackFields.push(breadthField);
+    }
+    if (!section.usedExplicitDepth) {
+      fallbackFields.push(depthField);
     }
   }
 
