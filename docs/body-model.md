@@ -73,7 +73,7 @@ Omitting `shapePrior` means that a downstream renderer must not assume one.
 
 The measurement layer contains renderer-independent physical dimensions.
 
-Body Model v1 currently supports 28 linear measurements in centimeters plus body mass in kilograms.
+Body Model v1 currently supports 32 linear measurements in centimeters, one shoulder-angle measurement in degrees, plus body mass in kilograms.
 
 ### Overall proportions
 
@@ -93,6 +93,7 @@ Together these fields capture major vertical and limb proportions that a single 
 | Field | Meaning |
 | --- | --- |
 | `shoulderBreadthCm` | shoulder breadth |
+| `shoulderSlopeDeg` | symmetric downward shoulder-line angle from horizontal |
 | `chestCircumferenceCm` | chest/bust-level torso circumference |
 | `chestBreadthCm` | horizontal chest breadth |
 | `chestDepthCm` | front-to-back chest depth |
@@ -114,13 +115,17 @@ A later measurement-protocol document should pin exact landmarks for creator-ass
 | Field | Meaning |
 | --- | --- |
 | `upperArmCircumferenceCm` | upper-arm circumference |
+| `upperArmLengthCm` | shoulder-to-elbow segment length |
+| `forearmLengthCm` | elbow-to-wrist segment length |
 | `forearmCircumferenceCm` | forearm circumference |
 | `wristCircumferenceCm` | wrist circumference |
 | `thighCircumferenceCm` | thigh circumference |
+| `thighLengthCm` | hip-to-knee segment length |
+| `lowerLegLengthCm` | knee-to-ankle segment length |
 | `calfCircumferenceCm` | calf circumference |
 | `ankleCircumferenceCm` | ankle circumference |
 
-These values let a 3D adapter distinguish bodies that share the same height and mass but distribute volume differently.
+These values let a 3D adapter distinguish bodies that share the same height and mass but distribute volume differently. Explicit limb segment lengths also prevent the renderer from assuming fixed upper/lower limb ratios.
 
 ### Hands, feet, and head
 
@@ -263,7 +268,6 @@ Candidates include:
 - chest/breast projection and distribution;
 - abdomen projection;
 - glute projection and fullness;
-- shoulder slope;
 - torso surface contour beyond the explicit breadth/depth measurements;
 - regional muscle distribution;
 - posture;
@@ -276,7 +280,7 @@ There are two risks in adding them prematurely:
 1. defining subjective sliders that only make sense for one mesh;
 2. duplicating geometry that can already be reconstructed from measurements.
 
-The first 3D prototype confirmed that torso breadth/depth measurements materially reduce renderer guesswork, so those dimensions are now explicit. Remaining surface-shape candidates still require further visual validation before being frozen.
+The first 3D prototype confirmed that torso breadth/depth measurements materially reduce renderer guesswork. A second mapping pass then confirmed that shoulder slope and explicit limb segment lengths remove additional fixed renderer assumptions. Remaining surface-shape candidates still require further visual validation before being frozen.
 
 ## Intimate anatomy
 
