@@ -1,6 +1,6 @@
 # Real Human Mesh Prototype
 
-Stage 1 of the SCC real-mesh adapter.
+Stage 1 loads the pinned real human base mesh. Stage 2 preserves source vertex indices and adds independent CC0 target parsing/application.
 
 ## Run
 
@@ -35,3 +35,11 @@ Tests do not download the mesh.
 - MakeHuman application code: AGPL and not copied into this repository
 
 See [../../docs/real-mesh-adapter.md](../../docs/real-mesh-adapter.md).
+
+
+## Geometry engine
+
+- `makehuman-geometry.mjs` — minimal index-preserving OBJ parser plus MakeHuman target parser/application engine.
+- `test/makehuman-geometry.test.mjs` — synthetic parser and target-delta contract tests.
+
+The browser preview builds BufferGeometry from the SCC parser rather than Three.js OBJLoader so upstream target indices remain stable.

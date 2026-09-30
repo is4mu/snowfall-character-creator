@@ -2,7 +2,9 @@
 
 ## Status
 
-Stage 1 prototype for the first non-procedural human body renderer.
+Stage 1 established the pinned real human base mesh and explicit mapping coverage.
+
+**Stage 2 now adds an SCC-owned, index-preserving geometry/target engine** so MakeHuman CC0 target deltas can be applied without copying MakeHuman application code.
 
 The selected upstream asset source is the **MakeHuman core asset set**, pinned to:
 
@@ -226,3 +228,104 @@ Stage 1 is successful when:
 - unsupported fields remain visibly unsupported;
 - shape prior remains renderer-local;
 - no MakeHuman AGPL program code is copied into SCC.
+
+
+## Stage 2: index-preserving target engine
+
+MakeHuman target files reference the original base-mesh vertex indices.
+
+A typical target line is:
+
+```text
+4774 -.005 0 .012
+```
+
+meaning:
+
+```text
+vertex index 4774
+delta x = -0.005
+delta y = 0
+delta z = 0.012
+```
+
+The pinned base OBJ contains polygon faces whose references point back to the original OBJ vertex list.
+
+Using a generic OBJ renderer loader is not sufficient as an SCC contract because the loader may expand, duplicate, or reorder render vertices.
+
+SCC therefore owns a deliberately small parser for the pinned asset format.
+
+### OBJ parser
+
+`makehuman-geometry.mjs`:
+
+- reads original `v` records in source order;
+- ignores texture/material data not needed for the neutral gray prototype;
+- reads face vertex references while preserving source vertex indices;
+- supports OBJ positive and negative indices;
+- triangulates polygon faces using a deterministic fan;
+- emits one position entry per original source vertex.
+
+The resulting BufferGeometry position index therefore remains compatible with MakeHuman target files.
+
+### Target parser
+
+The same module parses sparse CC0 target delta files.
+
+It:
+
+- ignores comments and blank lines;
+- validates vertex indices and numeric deltas;
+- rejects duplicate delta entries;
+- keeps target weights renderer-local.
+
+### Target application
+
+Two operations are provided:
+
+```text
+applyTarget(base, deltas, weight 0..1)
+
+applyBidirectionalTarget(
+  base,
+  decreaseTarget,
+  increaseTarget,
+  signedWeight -1..1
+)
+```
+
+Both return new position arrays and leave the source base mesh unchanged.
+
+This is important because renderer solutions must remain disposable and reproducible.
+
+### Browser preview change
+
+The real-mesh preview no longer uses Three.js `OBJLoader`.
+
+It fetches the pinned CC0 OBJ as text, parses it through the SCC geometry layer, and constructs Three.js BufferGeometry from the preserved source positions and triangulated faces.
+
+Three.js remains only the display layer.
+
+### What Stage 2 does not do yet
+
+The engine can apply target files, but SCC has not yet solved target weights from centimeter measurements.
+
+The next step is calibration:
+
+```text
+canonical SCC cm target
+       |
+       v
+renderer target weight
+       |
+       v
+deformed mesh
+       |
+       v
+SCC measurement function
+       |
+       v
+error / solver
+```
+
+Until that loop exists, target weights are renderer implementation detail and must not be serialized.
