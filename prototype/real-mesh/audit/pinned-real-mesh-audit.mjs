@@ -35,6 +35,9 @@ import {
   findUnderbustReferencePlane,
 } from "../underbust-reference-plane.mjs";
 import {
+  findThoraxReferenceLandmarks,
+} from "../thorax-reference-landmarks.mjs";
+import {
   CHEST_REFERENCE_SWEEP_CONTRACT,
   detectChestReferenceJumps,
   detectUnderbustTransitions,
@@ -276,6 +279,78 @@ function runChestReferenceSweep({
   const chestReferenceJumps =
     detectChestReferenceJumps(samples);
 
+  const pairedThoraxSamples = evaluations.map(
+    (evaluation, index) => {
+      const weight = weights[index];
+
+      if (
+        evaluation?.status !== "measured" ||
+        !evaluation.positions
+      ) {
+        return {
+          weight,
+          status: "invalid-evaluation",
+          measuredChestCm: null,
+          selectedChestHeightFraction: null,
+          mode: null,
+          underbustReference: {
+            status: "not-evaluated",
+            selectedHeightFraction: null,
+          },
+        };
+      }
+
+      const landmarks = findThoraxReferenceLandmarks({
+        positions: evaluation.positions,
+        triangles: bodyTriangles,
+        bodyVertexIndices,
+        surfaceDirection: {x: 0, z: 1},
+      });
+
+      const cmPerUnit =
+        canonicalHeightCm / landmarks.bodyBounds.height;
+      const selectedChestFraction =
+        landmarks.chest?.heightFraction ?? null;
+      const pairedChestCm =
+        landmarks.status === "selected" &&
+        Number.isFinite(landmarks.chest?.perimeterUnits)
+          ? landmarks.chest.perimeterUnits * cmPerUnit
+          : null;
+
+      return {
+        weight,
+        status:
+          landmarks.status === "selected"
+            ? "measured"
+            : landmarks.status,
+        measuredChestCm: pairedChestCm,
+        selectedChestHeightFraction:
+          selectedChestFraction,
+        mode: landmarks.mode,
+        appendageMergeBoundaryFraction:
+          landmarks.appendageMergeBoundary
+            ?.boundaryHeightFraction ?? null,
+        underbustReference: {
+          status: landmarks.underbust.status,
+          selectedHeightFraction:
+            landmarks.underbust.selected
+              ?.heightFraction ?? null,
+          prominenceHeightFraction:
+            landmarks.underbust.selected
+              ?.prominenceHeightFraction ?? null,
+          peakSeparationHeightFraction:
+            landmarks.underbust.selected
+              ?.peakSeparationHeightFraction ?? null,
+        },
+      };
+    },
+  );
+
+  const pairedThoraxChestJumps =
+    detectChestReferenceJumps(pairedThoraxSamples);
+  const pairedThoraxUnderbustTransitions =
+    detectUnderbustTransitions(pairedThoraxSamples);
+
   const jumpNeighborhoods = chestReferenceJumps.map((jump) =>
     buildSweepJumpNeighborhood({
       jump,
@@ -314,6 +389,13 @@ function runChestReferenceSweep({
     chestReferenceJumps,
     jumpNeighborhoods,
     samples,
+    pairedThorax: {
+      contract: "scc-thorax-reference-landmarks-v0",
+      chestReferenceJumps: pairedThoraxChestJumps,
+      underbustTransitions:
+        pairedThoraxUnderbustTransitions,
+      samples: pairedThoraxSamples,
+    },
   };
 }
 
@@ -726,6 +808,22 @@ async function main() {
     });
   });
 
+  const pairedThoraxAcceptanceFailures =
+    chestReferenceSweep
+      .filter(
+        (sweep) =>
+          (sweep.pairedThorax?.chestReferenceJumps?.length ?? 0) > 0,
+      )
+      .map((sweep) => ({
+        shapePrior: sweep.shapePrior,
+        targetShoulderBreadthCm:
+          sweep.targetShoulderBreadthCm,
+        jumpCount:
+          sweep.pairedThorax.chestReferenceJumps.length,
+        jumps:
+          sweep.pairedThorax.chestReferenceJumps,
+      }));
+
   verifiedAssets.sort((a, b) =>
     a.path.localeCompare(b.path)
   );
@@ -751,6 +849,15 @@ async function main() {
     results,
     underbustExploration,
     chestReferenceSweep,
+    acceptance: {
+      pairedThoraxChestContinuity: {
+        status:
+          pairedThoraxAcceptanceFailures.length === 0
+            ? "passed"
+            : "failed",
+        failures: pairedThoraxAcceptanceFailures,
+      },
+    },
   };
 
   await mkdir(dirname(outputPath), { recursive: true });
@@ -763,6 +870,13 @@ async function main() {
   process.stdout.write(
     `${JSON.stringify(report, null, 2)}\n`,
   );
+
+  if (pairedThoraxAcceptanceFailures.length > 0) {
+    throw new Error(
+      "paired thorax chest continuity acceptance failed: " +
+        JSON.stringify(pairedThoraxAcceptanceFailures),
+    );
+  }
 }
 
 main().catch((error) => {
