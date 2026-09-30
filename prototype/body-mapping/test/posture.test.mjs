@@ -59,16 +59,18 @@ test("derived preview transforms are deterministic and renderer-local", () => {
   assert.ok(first.trunkPitchRad > 0);
 });
 
-test("deriving posture does not mutate its input", () => {
+test("deriving posture does not mutate posture or body dimensions", () => {
   const input = {
     pelvicTiltDeg: 5,
     trunkFlexionDeg: 10,
   };
-  const before = JSON.stringify(input);
+  const inputBefore = JSON.stringify(input);
+  const dimensionsBefore = JSON.stringify(dimensions);
 
   derivePreviewPostureTransforms(input, dimensions);
 
-  assert.equal(JSON.stringify(input), before);
+  assert.equal(JSON.stringify(input), inputBefore);
+  assert.equal(JSON.stringify(dimensions), dimensionsBefore);
 });
 
 test("posture transforms require renderer body dimensions", () => {
