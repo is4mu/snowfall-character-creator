@@ -21,6 +21,7 @@ This directory contains the portable Character Schema contract and fixtures used
 | `fixtures/invalid/body-missing-model.character.json` | invalid | body object omits required model identifier |
 | `fixtures/invalid/body-shape-prior-invalid.character.json` | invalid | unsupported body shape prior |
 | `fixtures/invalid/body-renderer-local-field.character.json` | invalid | renderer-local surface state is not canonical body data |
+| `fixtures/invalid/body-renderer-target-weight.character.json` | invalid | MakeHuman target weights are renderer-local and not canonical body data |
 | `fixtures/invalid/body-posture-field.character.json` | invalid | preview/runtime posture is not canonical body data |
 | `fixtures/invalid/body-shoulder-slope-out-of-range.character.json` | invalid | shoulder slope exceeds the draft range |
 | `fixtures/invalid/missing-identity.character.json` | invalid | required `identity` is absent |
