@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.negative-measurement",
+  "identity": {
+    "displayName": "Invalid Measurement"
+  },
+  "body": {
+    "measurements": {
+      "footLengthCm": -25
+    }
+  }
+}
