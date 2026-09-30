@@ -131,14 +131,54 @@ function solveEllipseHalfDepth(circumferenceM, halfWidthM) {
   return (low + high) / 2;
 }
 
-function sectionFromCircumference(circumferenceCm, widthAspect) {
+function sectionFromMeasurements({
+  circumferenceCm,
+  breadthCm,
+  depthCm,
+  widthAspect,
+}) {
+  const explicitBreadth =
+    Number.isFinite(breadthCm) && breadthCm > 0 ? cmToM(breadthCm) : null;
+  const explicitDepth =
+    Number.isFinite(depthCm) && depthCm > 0 ? cmToM(depthCm) : null;
+
+  if (explicitBreadth && explicitDepth) {
+    return {
+      halfWidthM: explicitBreadth / 2,
+      halfDepthM: explicitDepth / 2,
+      usedExplicitCrossSection: true,
+    };
+  }
+
   const circumferenceM = cmToM(circumferenceCm);
+
+  if (explicitBreadth) {
+    return {
+      halfWidthM: explicitBreadth / 2,
+      halfDepthM: solveEllipseHalfDepth(circumferenceM, explicitBreadth / 2),
+      usedExplicitCrossSection: true,
+    };
+  }
+
+  if (explicitDepth) {
+    const solvedHalfWidth = solveEllipseHalfDepth(
+      circumferenceM,
+      explicitDepth / 2,
+    );
+    return {
+      halfWidthM: solvedHalfWidth,
+      halfDepthM: explicitDepth / 2,
+      usedExplicitCrossSection: true,
+    };
+  }
+
   const equivalentRadius = equivalentRadiusFromCircumference(circumferenceM);
   const halfWidth = equivalentRadius * widthAspect;
   const halfDepth = solveEllipseHalfDepth(circumferenceM, halfWidth);
   return {
     halfWidthM: halfWidth,
     halfDepthM: halfDepth,
+    usedExplicitCrossSection: false,
   };
 }
 
@@ -210,18 +250,36 @@ export function mapBodyToRenderModel(body) {
   const softTissueScale = 0.92 + bodyFatFraction * 0.34;
   const muscleScale = 0.88 + muscularity * 0.28;
 
-  const chest = sectionFromCircumference(
-    chestCircumferenceCm,
-    shapePrior === "masculine" ? 1.19 : shapePrior === "feminine" ? 1.13 : 1.16,
-  );
-  const waist = sectionFromCircumference(
-    waistCircumferenceCm,
-    shapePrior === "feminine" ? 1.16 : 1.14,
-  );
-  const hip = sectionFromCircumference(
-    hipCircumferenceCm,
-    shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
-  );
+  const chest = sectionFromMeasurements({
+    circumferenceCm: chestCircumferenceCm,
+    breadthCm: measurements.chestBreadthCm,
+    depthCm: measurements.chestDepthCm,
+    widthAspect:
+      shapePrior === "masculine" ? 1.19 : shapePrior === "feminine" ? 1.13 : 1.16,
+  });
+  const waist = sectionFromMeasurements({
+    circumferenceCm: waistCircumferenceCm,
+    breadthCm: measurements.waistBreadthCm,
+    depthCm: measurements.waistDepthCm,
+    widthAspect: shapePrior === "feminine" ? 1.16 : 1.14,
+  });
+  const hip = sectionFromMeasurements({
+    circumferenceCm: hipCircumferenceCm,
+    breadthCm: measurements.hipBreadthCm,
+    depthCm: measurements.buttockDepthCm,
+    widthAspect:
+      shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
+  });
+
+  for (const [section, fields] of [
+    [chest, ["measurements.chestBreadthCm", "measurements.chestDepthCm"]],
+    [waist, ["measurements.waistBreadthCm", "measurements.waistDepthCm"]],
+    [hip, ["measurements.hipBreadthCm", "measurements.buttockDepthCm"]],
+  ]) {
+    if (!section.usedExplicitCrossSection) {
+      fallbackFields.push(...fields);
+    }
+  }
 
   const heightM = cmToM(heightCm);
   const inseamM = Math.min(cmToM(inseamCm), heightM * 0.58);
@@ -303,7 +361,7 @@ export function mapBodyToRenderModel(body) {
     },
     unresolvedShapeDimensions: [
       "shoulderSlope",
-      "torsoCrossSectionProfile",
+      "torsoCrossSectionProfileBeyondBreadthDepth",
       "chestOrBreastProjection",
       "abdomenProjection",
       "gluteProjection",
