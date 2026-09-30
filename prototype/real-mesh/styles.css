@@ -1,0 +1,168 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: #1b1b1b;
+  background: #f7f7f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #d8d8d8;
+  background: #fff;
+}
+
+header h1 {
+  margin: 0.1rem 0 0.5rem;
+}
+
+header p {
+  max-width: 74ch;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.header-actions,
+.control-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+button {
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #bdbdbd;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(440px, 1fr) minmax(300px, 390px);
+  min-height: calc(100vh - 130px);
+}
+
+.panel {
+  padding: 1.25rem;
+  overflow: auto;
+  background: #fff;
+}
+
+.panel:first-child {
+  border-right: 1px solid #d8d8d8;
+}
+
+.diagnostics-panel {
+  border-left: 1px solid #d8d8d8;
+}
+
+.control {
+  display: block;
+  margin: 1rem 0;
+}
+
+.control > span {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.control-row input {
+  flex: 1;
+}
+
+.control-row output {
+  min-width: 5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+select {
+  width: 100%;
+  padding: 0.55rem;
+}
+
+.viewport-wrap {
+  position: relative;
+  min-height: 680px;
+  background: #f3f3f3;
+}
+
+#viewport {
+  position: absolute;
+  inset: 0;
+}
+
+#viewport canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.viewport-hint {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.75rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.35rem;
+  background: rgb(255 255 255 / 80%);
+  font-size: 0.78rem;
+}
+
+.note {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #555;
+}
+
+pre {
+  overflow: auto;
+  padding: 0.75rem;
+  border-radius: 0.45rem;
+  background: #f3f3f3;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1050px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .viewport-wrap {
+    min-height: 600px;
+  }
+
+  .panel:first-child,
+  .diagnostics-panel {
+    border: 0;
+    border-bottom: 1px solid #d8d8d8;
+  }
+}

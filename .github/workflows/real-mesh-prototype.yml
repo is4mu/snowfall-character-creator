@@ -1,0 +1,42 @@
+name: Real mesh prototype
+
+on:
+  pull_request:
+    paths:
+      - "prototype/real-mesh/**"
+      - "docs/real-mesh-adapter.md"
+      - ".github/workflows/real-mesh-prototype.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "prototype/real-mesh/**"
+      - "docs/real-mesh-adapter.md"
+      - ".github/workflows/real-mesh-prototype.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-real-mesh-adapter:
+    name: Test real mesh adapter contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Check JavaScript module syntax
+        run: |
+          node --check prototype/real-mesh/asset-manifest.mjs
+          node --check prototype/real-mesh/makehuman-adapter.mjs
+          node --check prototype/real-mesh/app.mjs
+
+      - name: Run real mesh adapter contract tests
+        run: node --test prototype/real-mesh/test/*.test.mjs
