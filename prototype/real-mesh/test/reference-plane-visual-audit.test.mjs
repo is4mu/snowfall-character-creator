@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildChestSolverPresentation,
   buildReferencePlaneVisualAuditState,
   evaluateReferencePlaneVisualAudit,
+  extractReferenceContour,
   REFERENCE_PLANE_VISUAL_AUDIT_CONTRACT,
 } from "../reference-plane-visual-audit.mjs";
 
@@ -180,4 +182,114 @@ test("evaluation is measurement-only and leaves source positions unchanged", () 
   assert.equal(result.status, "ready");
   assert.equal(result.underbust.status, "selected");
   assert.deepEqual(mesh.positions, before);
+});
+
+
+test("extracts the exact central body contour at a selected plane", () => {
+  const mesh = profiledMesh();
+  const contour = extractReferenceContour({
+    positions: mesh.positions,
+    triangles: mesh.triangles,
+    planeY: 7.5,
+    center: {x: 0, z: 0},
+  });
+
+  assert.equal(contour.status, "selected");
+  assert.ok(contour.points.length >= 4);
+  assert.ok(
+    contour.points.every((point) => point.y === 7.5),
+  );
+  assert.ok(contour.perimeterUnits > 0);
+});
+
+test("does not fabricate a contour when no body loop exists", () => {
+  const mesh = profiledMesh();
+  const contour = extractReferenceContour({
+    positions: mesh.positions,
+    triangles: new Uint32Array([]),
+    planeY: 7.5,
+  });
+
+  assert.equal(contour.status, "no-loop");
+  assert.equal(contour.points, null);
+});
+
+test("evaluation exposes exact chest and underbust contours", () => {
+  const mesh = profiledMesh();
+  const result = evaluateReferencePlaneVisualAudit({
+    ...mesh,
+    canonicalHeightCm: 160,
+    chestReference: {
+      ...chestReference({
+        heightFraction: 1,
+        planeY: 10,
+      }),
+      bodyCenter: {x: 0, z: 0},
+    },
+    surfaceDirection: {x: 0, z: 1},
+    underbustOptions: {
+      maxBelowChestFraction: 0.5,
+      minBelowChestFraction: 0.05,
+      sampleCount: 19,
+      minProminenceHeightFraction: 0.02,
+      minPeakSeparationHeightFraction: 0.05,
+      maxPeakSeparationHeightFraction: 0.4,
+    },
+  });
+
+  assert.equal(result.chestContour.status, "selected");
+  assert.equal(result.underbustContour.status, "selected");
+  assert.ok(result.chestContour.points.length >= 4);
+  assert.ok(result.underbustContour.points.length >= 4);
+});
+
+test("chest solver presentation exposes solved renderer response", () => {
+  const result = buildChestSolverPresentation({
+    requestedChestCm: 88,
+    coupledChestCalibration: {
+      status: "solved",
+      chestMeasuredCm: 88.004,
+      chestResidualCm: 0.004,
+      bustWeight: -0.3,
+      scan: {
+        measuredRange: {min: 77.2, max: 106.8},
+      },
+    },
+  });
+
+  assert.equal(result.status, "solved");
+  assert.equal(result.requestedChestCm, 88);
+  assert.equal(result.measuredChestCm, 88.004);
+  assert.deepEqual(
+    result.reachableRangeCm,
+    {min: 77.2, max: 106.8},
+  );
+  assert.equal(result.bustWeight, -0.3);
+  assert.equal(result.displayedBodySource, "coupled-solved");
+});
+
+test("chest solver presentation makes fallback explicit", () => {
+  const result = buildChestSolverPresentation({
+    requestedChestCm: 120,
+    coupledChestCalibration: {
+      status: "out-of-range",
+      chestMeasuredCm: null,
+      chestResidualCm: null,
+      bustWeight: null,
+      scan: {
+        measuredRange: {min: 81.6, max: 108.9},
+      },
+    },
+    displayedBodySource: "shoulder-only-fallback",
+  });
+
+  assert.equal(result.status, "out-of-range");
+  assert.deepEqual(
+    result.reachableRangeCm,
+    {min: 81.6, max: 108.9},
+  );
+  assert.equal(
+    result.displayedBodySource,
+    "shoulder-only-fallback",
+  );
 });
