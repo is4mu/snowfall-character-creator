@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.body-negative-abdominal-depth",
+  "identity": {
+    "displayName": "Invalid Abdominal Depth"
+  },
+  "body": {
+    "model": "scc-body-v1",
+    "measurements": {
+      "abdominalDepthCm": -18
+    }
+  }
+}

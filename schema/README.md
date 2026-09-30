@@ -17,8 +17,10 @@ This directory contains the portable Character Schema contract and fixtures used
 | `examples/full.character.json` | valid | exercises all draft domains |
 | `fixtures/invalid/body-fat-out-of-range.character.json` | invalid | `bodyFatFraction` exceeds `1.0` |
 | `fixtures/invalid/body-negative-depth.character.json` | invalid | torso depth measurement is negative |
+| `fixtures/invalid/body-negative-abdominal-depth.character.json` | invalid | abdominal depth measurement is negative |
 | `fixtures/invalid/body-missing-model.character.json` | invalid | body object omits required model identifier |
 | `fixtures/invalid/body-shape-prior-invalid.character.json` | invalid | unsupported body shape prior |
+| `fixtures/invalid/body-renderer-local-field.character.json` | invalid | renderer-local surface state is not canonical body data |
 | `fixtures/invalid/body-shoulder-slope-out-of-range.character.json` | invalid | shoulder slope exceeds the draft range |
 | `fixtures/invalid/missing-identity.character.json` | invalid | required `identity` is absent |
 | `fixtures/invalid/personality-out-of-range.character.json` | invalid | personality trait exceeds `1.0` |

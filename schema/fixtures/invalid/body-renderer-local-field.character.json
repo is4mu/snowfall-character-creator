@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.renderer-local-body-field",
+  "identity": {
+    "displayName": "Invalid Renderer State"
+  },
+  "body": {
+    "model": "scc-body-v1",
+    "rendererLocalSurface": {
+      "chestAnteriorShare": 0.6
+    }
+  }
+}

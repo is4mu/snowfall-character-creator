@@ -101,6 +101,7 @@ The current UI exposes:
 - upper-arm, forearm, thigh, and lower-leg segment lengths;
 - chest circumference, breadth, and depth;
 - waist circumference, breadth, and depth;
+- abdominal depth;
 - hip circumference, breadth, and buttock depth;
 - body-fat fraction;
 - muscularity.
@@ -162,19 +163,19 @@ The adapter uses these explicit measurements whenever present. Width/depth aspec
 
 Body Model v1 now includes `shoulderSlopeDeg`, defined as a symmetric downward shoulder-line angle from horizontal. The procedural renderer uses it to lower the lateral shoulder and slope the top torso ring.
 
-### 3. Circumference does not determine chest/breast projection
+### 3. Gross depth does not determine local chest/breast distribution — renderer-local for now
 
-Chest and underbust circumferences constrain volume but do not uniquely determine anterior projection or tissue distribution.
+Chest depth is canonical, but the same gross depth can be distributed differently between anterior chest tissue and the posterior torso.
 
-The current prototype deliberately does not synthesize a breast-specific mesh.
+The prototype now makes that front/back allocation explicit as a renderer-local policy rather than inventing a canonical normalized breast-projection slider.
 
-If this becomes a required creator control, the project should prefer explicit renderer-independent geometry such as depth/projection measurements over regional cup-size labels.
+This preserves total measured chest depth while allowing the procedural renderer to produce a visible local contour assumption.
 
-### 4. Hip circumference does not determine glute projection
+### 4. Gross buttock depth does not determine local glute contour — renderer-local for now
 
-A body can have the same hip circumference with different lateral breadth and posterior projection.
+`buttockDepthCm` already constrains total front-to-back size at the buttock level.
 
-Buttock depth or a comparable physical depth measurement is therefore a strong candidate.
+The remaining ambiguity is where that depth is distributed and how the contour transitions vertically and laterally. The prototype keeps that allocation renderer-local instead of adding a subjective `gluteProjection` field.
 
 ### 5. Total limb length does not determine segment ratios — addressed
 
@@ -265,13 +266,21 @@ The goal is the minimum stable semantic model, not maximum shape control in the 
 - `thighLengthCm`;
 - `lowerLegLengthCm`.
 
+### Implemented from the surface-boundary prototype
+
+- `abdominalDepthCm` as a canonical physical measurement;
+- renderer-local chest anterior-share policy;
+- renderer-local abdomen anterior-share policy;
+- renderer-local glute posterior-share policy.
+
+These distribution values are adapter output only and never Character Schema fields.
+
 ### Remaining candidates
 
-These still need further validation before being frozen:
+These still need further validation before any promotion into the schema:
 
-- local chest/breast projection beyond gross chest depth;
-- local abdomen projection;
-- local glute contour beyond buttock depth;
+- stable landmark-based chest-surface geometry beyond gross depth;
+- stable landmark-based glute-surface geometry beyond gross depth;
 - regional muscle distribution.
 
 ### Defer to another model
@@ -301,6 +310,9 @@ A new body field should be added only when all are true:
 
 The recommended follow-up is not a production UI.
 
-The breadth/depth, shoulder-slope, and limb-segment refinements have now been applied. The next prototype pass should focus on local surface projection/distribution and decide whether posture belongs in the body model at all.
+The breadth/depth, shoulder-slope, limb-segment, and surface-boundary passes have now been applied. Local chest/abdomen/glute distribution remains renderer-local by design. The next architectural question is whether posture belongs in character body data, creator presentation state, or a separate pose/posture model.
 
 The project should still avoid choosing the long-term 3D/UI stack until those semantic boundaries are clearer.
+
+
+See [Surface Shape Boundary](surface-shape-boundary.md) for the canonical-versus-renderer-local decision.

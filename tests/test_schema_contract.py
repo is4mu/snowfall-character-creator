@@ -115,6 +115,7 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "waistCircumferenceCm",
             "waistBreadthCm",
             "waistDepthCm",
+            "abdominalDepthCm",
             "hipCircumferenceCm",
             "hipBreadthCm",
             "buttockDepthCm",
@@ -205,6 +206,10 @@ class CharacterSchemaContractTests(unittest.TestCase):
                 "validator": "enum",
                 "instance_path": ["body", "shapePrior"],
             },
+            "body-renderer-local-field.character.json": {
+                "validator": "additionalProperties",
+                "instance_path": ["body"],
+            },
             "body-shoulder-slope-out-of-range.character.json": {
                 "validator": "maximum",
                 "instance_path": [
@@ -219,6 +224,14 @@ class CharacterSchemaContractTests(unittest.TestCase):
                     "body",
                     "measurements",
                     "chestDepthCm",
+                ],
+            },
+            "body-negative-abdominal-depth.character.json": {
+                "validator": "exclusiveMinimum",
+                "instance_path": [
+                    "body",
+                    "measurements",
+                    "abdominalDepthCm",
                 ],
             },
             "missing-identity.character.json": {

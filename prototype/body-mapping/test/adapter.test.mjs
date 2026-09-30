@@ -22,6 +22,7 @@ const explicitBody = {
     waistCircumferenceCm: 76,
     waistBreadthCm: 27,
     waistDepthCm: 20,
+    abdominalDepthCm: 21.5,
     hipCircumferenceCm: 94,
     hipBreadthCm: 35,
     buttockDepthCm: 24,
@@ -62,6 +63,14 @@ test("explicit semantic measurements override shape-prior defaults", () => {
   assert.equal(
     masculine.fallbackFields.includes("measurements.shoulderBreadthCm"),
     false,
+  );
+  assert.equal(
+    feminine.dimensions.torso.chestHalfDepthM,
+    masculine.dimensions.torso.chestHalfDepthM,
+  );
+  assert.notEqual(
+    feminine.rendererLocalSurface.chestAnteriorShare,
+    masculine.rendererLocalSurface.chestAnteriorShare,
   );
 });
 
@@ -155,6 +164,46 @@ test("partial torso cross-section input reports only the missing dimension", () 
   );
 });
 
+test("abdominal depth is canonical while local surface distribution is renderer-only", () => {
+  const before = JSON.stringify(explicitBody);
+  const result = mapBodyToRenderModel(explicitBody);
+
+  assert.equal(result.dimensions.torso.abdomenHalfDepthM, 0.1075);
+  assert.equal(
+    result.fallbackFields.includes("measurements.abdominalDepthCm"),
+    false,
+  );
+
+  assert.equal(result.rendererLocalSurface.contract, "scc-procedural-surface-v0");
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(explicitBody, "rendererLocalSurface"),
+    false,
+  );
+  assert.equal(JSON.stringify(explicitBody), before);
+
+  const repeated = mapBodyToRenderModel(explicitBody);
+  assert.deepEqual(
+    repeated.rendererLocalSurface,
+    result.rendererLocalSurface,
+  );
+});
+
+test("missing abdominal depth is an explicit renderer fallback", () => {
+  const measurements = {...explicitBody.measurements};
+  delete measurements.abdominalDepthCm;
+
+  const result = mapBodyToRenderModel({
+    ...explicitBody,
+    measurements,
+  });
+
+  assert.equal(
+    result.fallbackFields.includes("measurements.abdominalDepthCm"),
+    true,
+  );
+  assert.ok(result.dimensions.torso.abdomenHalfDepthM > 0);
+});
+
 test("composition metadata does not rewrite explicit anthropometric dimensions", () => {
   const lean = mapBodyToRenderModel({
     ...explicitBody,
@@ -200,9 +249,20 @@ test("does not pretend underdetermined surface shape is solved", () => {
     ),
   );
   assert.ok(
-    result.unresolvedShapeDimensions.includes("chestOrBreastProjection"),
+    result.unresolvedShapeDimensions.includes(
+      "chestSurfaceDistributionBeyondGrossDepth",
+    ),
   );
-  assert.ok(result.unresolvedShapeDimensions.includes("gluteProjection"));
+  assert.ok(
+    result.unresolvedShapeDimensions.includes(
+      "abdomenSurfaceDistributionBeyondDepth",
+    ),
+  );
+  assert.ok(
+    result.unresolvedShapeDimensions.includes(
+      "gluteSurfaceDistributionBeyondGrossDepth",
+    ),
+  );
   assert.ok(result.unresolvedShapeDimensions.includes("posture"));
 });
 

@@ -73,7 +73,7 @@ Omitting `shapePrior` means that a downstream renderer must not assume one.
 
 The measurement layer contains renderer-independent physical dimensions.
 
-Body Model v1 currently supports 32 linear measurements in centimeters, one shoulder-angle measurement in degrees, plus body mass in kilograms.
+Body Model v1 currently supports 33 linear measurements in centimeters, one shoulder-angle measurement in degrees, plus body mass in kilograms.
 
 ### Overall proportions
 
@@ -101,6 +101,7 @@ Together these fields capture major vertical and limb proportions that a single 
 | `waistCircumferenceCm` | waist circumference |
 | `waistBreadthCm` | horizontal waist breadth |
 | `waistDepthCm` | front-to-back waist depth |
+| `abdominalDepthCm` | maximum front-to-back abdominal depth at the documented abdominal landmark |
 | `hipCircumferenceCm` | maximum hip/buttock circumference |
 | `hipBreadthCm` | maximum standing hip breadth |
 | `buttockDepthCm` | front-to-back depth at the buttocks |
@@ -280,7 +281,7 @@ There are two risks in adding them prematurely:
 1. defining subjective sliders that only make sense for one mesh;
 2. duplicating geometry that can already be reconstructed from measurements.
 
-The first 3D prototype confirmed that torso breadth/depth measurements materially reduce renderer guesswork. A second mapping pass then confirmed that shoulder slope and explicit limb segment lengths remove additional fixed renderer assumptions. Remaining surface-shape candidates still require further visual validation before being frozen.
+The first 3D prototype confirmed that torso breadth/depth measurements materially reduce renderer guesswork. A second mapping pass then confirmed that shoulder slope and explicit limb segment lengths remove additional fixed renderer assumptions. Remaining local surface-shape differences are now explicitly split from canonical measurements. `abdominalDepthCm` is canonical because it is a physical depth measurement; chest/abdomen/glute front-back distribution remains renderer-local until portable semantics are demonstrated. See [Surface Shape Boundary](surface-shape-boundary.md).
 
 ## Intimate anatomy
 

@@ -107,7 +107,7 @@ The model separates:
 - body-composition authoring data;
 - renderer-specific mapping, which remains outside the core schema.
 
-The current draft supports 32 linear measurements in centimeters, a shoulder-slope angle in degrees, plus body mass in kilograms. These cover overall proportions, torso circumference/breadth/depth, limb segment lengths and circumferences, hand/foot dimensions, and head circumference.
+The current draft supports 33 linear measurements in centimeters, a shoulder-slope angle in degrees, plus body mass in kilograms. These cover overall proportions, torso circumference/breadth/depth, limb segment lengths and circumferences, hand/foot dimensions, and head circumference.
 
 `shapePrior` may be `masculine`, `feminine`, or `neutral`. It is only an under-specification prior for 3D generation. It is not gender identity or biological sex and must never be inferred from `identity.gender`.
 
@@ -115,9 +115,9 @@ Composition currently supports optional `bodyFatFraction` and normalized `muscul
 
 Regional clothing sizes, shoe sizes, bra sizes, renderer morph weights, and mesh identifiers remain derived or adapter-owned rather than canonical body data.
 
-Detailed surface-shape controls such as chest/breast projection, abdomen/glute projection, posture, asymmetry, and regional muscle distribution are intentionally deferred until a 3D prototype demonstrates which parameters need stable renderer-independent semantics.
+`abdominalDepthCm` is canonical because it is a physical depth measurement. Local chest, abdomen, and glute front/back distribution remains renderer-local; subjective morph sliders are not persisted until stable renderer-independent semantics exist. Posture, asymmetry, and regional muscle distribution remain deferred.
 
-See [Body Model v1](body-model.md) for the complete measurement list, design rationale, renderer boundary, and validation questions.
+See [Body Model v1](body-model.md) for the complete measurement list and [Surface Shape Boundary](surface-shape-boundary.md) for the canonical-versus-renderer-local decision.
 
 ## Appearance
 

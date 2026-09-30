@@ -47,7 +47,8 @@
       "upperArmLengthCm": 25,
       "forearmLengthCm": 22,
       "thighLengthCm": 39,
-      "lowerLegLengthCm": 35
+      "lowerLegLengthCm": 35,
+      "abdominalDepthCm": 21.5
     },
     "composition": {
       "bodyFatFraction": 0.26,
