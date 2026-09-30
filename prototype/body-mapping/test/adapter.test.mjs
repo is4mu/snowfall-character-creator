@@ -89,6 +89,25 @@ test("explicit breadth and depth map directly to renderer cross-sections", () =>
   assert.equal(result.dimensions.torso.hipHalfDepthM, 0.12);
 });
 
+test("partial torso cross-section input reports only the missing dimension", () => {
+  const measurements = {...explicitBody.measurements};
+  delete measurements.chestDepthCm;
+
+  const result = mapBodyToRenderModel({
+    ...explicitBody,
+    measurements,
+  });
+
+  assert.equal(
+    result.fallbackFields.includes("measurements.chestBreadthCm"),
+    false,
+  );
+  assert.equal(
+    result.fallbackFields.includes("measurements.chestDepthCm"),
+    true,
+  );
+});
+
 test("composition metadata does not rewrite explicit anthropometric dimensions", () => {
   const lean = mapBodyToRenderModel({
     ...explicitBody,
