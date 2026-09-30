@@ -19,6 +19,7 @@ This directory contains the portable Character Schema contract and fixtures used
 | `fixtures/invalid/body-negative-depth.character.json` | invalid | torso depth measurement is negative |
 | `fixtures/invalid/body-missing-model.character.json` | invalid | body object omits required model identifier |
 | `fixtures/invalid/body-shape-prior-invalid.character.json` | invalid | unsupported body shape prior |
+| `fixtures/invalid/body-shoulder-slope-out-of-range.character.json` | invalid | shoulder slope exceeds the draft range |
 | `fixtures/invalid/missing-identity.character.json` | invalid | required `identity` is absent |
 | `fixtures/invalid/personality-out-of-range.character.json` | invalid | personality trait exceeds `1.0` |
 | `fixtures/invalid/personality-missing-trait.character.json` | invalid | canonical personality vector is incomplete |
