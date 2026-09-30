@@ -35,6 +35,7 @@ jobs:
       - name: Check JavaScript module syntax
         run: |
           node --check prototype/real-mesh/body-cross-section.mjs
+          node --check prototype/real-mesh/chest-reference-plane.mjs
           node --check prototype/real-mesh/asset-manifest.mjs
           node --check prototype/real-mesh/makehuman-adapter.mjs
           node --check prototype/real-mesh/makehuman-debug-target.mjs
