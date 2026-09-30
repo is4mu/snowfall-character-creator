@@ -109,7 +109,7 @@ export function interpolateTargetDeltas(
 }
 
 export function shapePriorValue(shapePrior) {
-  if (!(shapePrior in SHAPE_PRIOR_VALUE)) {
+  if (!Object.hasOwn(SHAPE_PRIOR_VALUE, shapePrior)) {
     throw new TypeError(`Unsupported shapePrior: ${shapePrior}`);
   }
   return SHAPE_PRIOR_VALUE[shapePrior];
