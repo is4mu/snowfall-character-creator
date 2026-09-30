@@ -43,3 +43,12 @@ See [../../docs/real-mesh-adapter.md](../../docs/real-mesh-adapter.md).
 - `test/makehuman-geometry.test.mjs` — synthetic parser and target-delta contract tests.
 
 The browser preview builds BufferGeometry from the SCC parser rather than Three.js OBJLoader so upstream target indices remain stable.
+
+
+## Shoulder target debug
+
+The prototype fetches the pinned MakeHuman shoulder-distance decrease/increase targets and exposes a renderer-only signed debug weight from `-1..1`.
+
+The value is **uncalibrated** and is not saved to SCC character data.
+
+Every change is reapplied from immutable base positions, then the mesh is refit to canonical SCC height.
