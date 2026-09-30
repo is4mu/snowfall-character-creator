@@ -151,37 +151,38 @@ The schema does not yet define facial geometry, hairstyle taxonomies, makeup, cl
 
 ## Personality
 
-Personality stores underlying normalized traits rather than questionnaire answers or typology labels.
+Personality stores a complete vector of normalized baseline tendencies rather than questionnaire answers, broad type labels, or current emotional state.
 
-The draft core model is `scc-core-v1` with five required traits:
+The draft model is `scc-personality-v1` with **30 canonical traits grouped into eight domains**:
 
 - openness;
-- conscientiousness;
-- extraversion;
-- agreeableness;
-- emotional stability.
+- self-regulation;
+- social;
+- interpersonal;
+- integrity;
+- emotional;
+- behavioral motivation;
+- attachment.
 
-Each value is normalized to `0..1`.
+Every canonical trait uses a `0..1` scale with explicitly documented endpoint meanings.
 
-The current endpoint semantics are:
+If the `personality` object is present, the full 30-trait vector is required. Incomplete questionnaire or editor state belongs to creator workflow storage rather than the portable canonical character document.
 
-| Trait | 0.0 direction | 1.0 direction |
-| --- | --- | --- |
-| openness | familiar, conventional | exploratory, imaginative |
-| conscientiousness | spontaneous, flexible | planned, organized |
-| extraversion | reserved, low-stimulation | outgoing, high-stimulation |
-| agreeableness | competitive, blunt | cooperative, considerate |
-| emotional stability | emotionally reactive | calm, resilient |
+Broad summaries such as "extraversion" or "emotional stability" are derived views. They are not stored alongside the narrower traits because that would create multiple sources of truth.
 
-The endpoints are authoring directions, not value judgments. A value near either end may be appropriate for a well-designed character.
+Likewise, context-specific concepts such as risk propensity may be derived from several canonical traits plus the situation rather than stored as redundant personality fields.
 
-These values are character-authoring dimensions, not clinical measurements or psychological diagnoses.
+The full trait definitions, design rationale, removed/derived candidates, runtime boundary, and questionnaire policy are documented in [Personality Model v1](personality-model.md).
 
 ### Questionnaire boundary
 
-A questionnaire may generate the trait values, but the answers and scoring session are creator workflow data rather than canonical character identity.
+A questionnaire may estimate the 30 canonical values, but the answers and scoring session are creator workflow data rather than canonical character identity.
 
-Likewise, labels such as an MBTI-style code may be shown as an interpretation, but should not replace the underlying trait representation.
+Direct manual editing remains a first-class creation path.
+
+MBTI-style or archetype labels may be displayed as optional summaries or discovery aids, but they must not replace the underlying trait vector.
+
+The SCC model is intended for fictional character authoring. It is not a diagnostic instrument and should not be presented as a validated psychological assessment of real people.
 
 ## Background
 
