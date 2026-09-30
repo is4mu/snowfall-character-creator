@@ -63,7 +63,7 @@ The underbust status preserves the underlying finder result, including:
 - `no-stable-landmark`
 - `no-valid-slice`
 
-No display layer is allowed to fabricate a missing underbust plane.
+No display layer is allowed to fabricate a missing underbust plane or contour.
 
 ## Canonical separation
 
@@ -84,26 +84,30 @@ The browser creates each reference marker as a child of the body mesh root.
 
 That matters because the mesh root already owns the canonical-height scale and body-centering transform.
 
-Therefore the audit planes use raw solved-mesh coordinates and automatically follow:
+The visual layer now renders the **actual selected body-surface cross-section loop** rather than a large display plane.
+
+For each selected reference level it reuses the same body-only horizontal cross-section engine used by measurement, selects the central torso loop, and converts that closed loop into a Three.js `LineLoop`.
+
+The overlay uses:
+
+- chest: blue body-surface measurement contour;
+- underbust: orange body-surface measurement contour.
+
+The contour coordinates are raw solved-mesh coordinates and are attached to the body mesh root, so they automatically follow:
 
 - canonical height fitting;
 - body centering;
 - front/side/orbit camera movement.
 
-The overlay uses:
+This removes ambiguity between an arbitrary display rectangle and the actual perimeter being measured.
 
-- chest: blue translucent horizontal surface + outline;
-- underbust: orange translucent horizontal surface + outline.
-
-Marker dimensions are display-only. They are clamped against body height so the MakeHuman default-pose arm span cannot turn the thorax audit surface into a full arm-span plane.
-
-The underbust marker is created only when the finder returns `selected`.
+The underbust contour is created only when the finder returns `selected` and the exact slice topology is valid.
 
 ## UI behavior
 
 The real-mesh prototype includes:
 
-- a `Show reference planes` checkbox;
+- a `Show measurement contours` checkbox;
 - a chest/underbust color legend;
 - machine-readable audit status;
 - chest and underbust height fractions;
@@ -116,7 +120,7 @@ The toggle only changes visualization. It never changes the solved geometry or C
 If the coupled chest solve is unavailable:
 
 ```text
-reference-plane audit = not-ready
+reference-contour audit = not-ready
 overlays = cleared
 ```
 
@@ -156,8 +160,45 @@ For each prior:
 1. inspect front view;
 2. inspect side view;
 3. orbit around the thorax;
-4. confirm the blue chest plane matches the intended chest circumference level;
-5. confirm the orange underbust plane lies immediately below meaningful chest/breast projection;
-6. confirm no plane appears when the finder reports `no-stable-landmark`.
+4. confirm the blue chest contour crosses the intended chest-circumference surface path;
+5. confirm the orange underbust contour lies immediately below meaningful chest/breast projection;
+6. confirm no orange contour appears when the finder reports `no-stable-landmark`.
 
 A visual discrepancy is a measurement-contract issue to investigate. It must not be fixed by manually offsetting only the display plane.
+
+
+## Browser audit ergonomics
+
+The desktop prototype keeps the application within the browser viewport.
+
+The center 3D viewport remains stable while the left and right panels scroll independently. Raw mapping diagnostics and asset metadata are collapsed by default so large JSON payloads cannot determine page height.
+
+On narrow screens the layout returns to normal document scrolling.
+
+## Chest solver feedback
+
+The canonical chest slider intentionally remains wider than the current MakeHuman renderer's reachable range.
+
+The UI must not clamp Character Schema input to renderer capability.
+
+Instead the compact solver status reports:
+
+```text
+status
+requested chest cm
+measured chest cm
+residual
+reachable renderer range
+renderer-local bust weight
+displayed body source
+```
+
+When the target is outside the current renderer range, the displayed body is explicitly labeled:
+
+```text
+shoulder-only-fallback
+```
+
+This explains why moving the canonical chest slider can otherwise appear to have no visual effect.
+
+The chest reference height is also not expected to move proportionally with chest circumference. The canonical value changes the solved surface circumference/depth; the experimental reference finder independently re-evaluates which horizontal level should be measured. Side view is therefore the preferred view for auditing chest-target deformation.
