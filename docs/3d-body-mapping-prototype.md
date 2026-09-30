@@ -98,9 +98,9 @@ The current UI exposes:
 - shape prior;
 - height;
 - shoulder breadth;
-- chest circumference;
-- waist circumference;
-- hip circumference;
+- chest circumference, breadth, and depth;
+- waist circumference, breadth, and depth;
+- hip circumference, breadth, and buttock depth;
 - body-fat fraction;
 - muscularity.
 
@@ -127,7 +127,7 @@ A renderer must produce geometry even when SCC does not specify every geometric 
 The adapter currently makes explicit fallback assumptions for:
 
 - body measurements omitted from the character;
-- torso width/depth aspect ratios;
+- torso width/depth aspect ratios only when explicit breadth/depth are absent;
 - upper/lower leg length split;
 - upper-arm/forearm length split;
 - head proportions;
@@ -142,26 +142,20 @@ The adapter reports which fields were filled by fallback in `fallbackFields`.
 
 The mapping exercise exposes several dimensions that cannot be uniquely reconstructed from Body Model v1.
 
-### 1. Circumference does not determine body cross-section
+### 1. Circumference does not determine body cross-section — addressed
 
-Chest, waist, and hip circumference do not determine front-to-back depth versus left-to-right breadth.
+The first prototype showed that chest, waist, and hip circumference alone cannot determine front-to-back depth versus left-to-right breadth.
 
-Two bodies can have the same circumference but very different profiles.
+Body Model v1 now includes:
 
-The prototype therefore has to invent a width/depth aspect ratio.
+- `chestBreadthCm`;
+- `chestDepthCm`;
+- `waistBreadthCm`;
+- `waistDepthCm`;
+- `hipBreadthCm`;
+- `buttockDepthCm`.
 
-This is the strongest candidate for Body Model refinement.
-
-Potential stable measurements include:
-
-- chest breadth;
-- chest depth;
-- waist breadth;
-- waist depth;
-- hip breadth;
-- buttock depth.
-
-Breadth/depth anthropometry is well established independently of any 3D renderer, which makes these stronger candidates than arbitrary shape sliders.
+The adapter uses these explicit measurements whenever present. Width/depth aspect ratios are now fallback assumptions only for incomplete characters.
 
 ### 2. Shoulder breadth does not determine shoulder slope
 
@@ -262,9 +256,7 @@ The goal is the minimum stable semantic model, not maximum shape control in the 
 
 ## Candidate Body Model v1 refinements
 
-### High-confidence candidates
-
-These are physically meaningful and directly solve ambiguity introduced by the prototype:
+### Implemented from the first prototype
 
 - `chestBreadthCm`;
 - `chestDepthCm`;
@@ -310,6 +302,6 @@ A new body field should be added only when all are true:
 
 The recommended follow-up is not a production UI.
 
-It is a focused Body Model refinement issue for breadth/depth measurements, followed by a second prototype pass that removes those adapter assumptions.
+The breadth/depth refinement has now been applied. The next prototype pass should focus on the remaining ambiguous dimensions: shoulder slope, limb segment ratios, local chest/glute projection, posture, and regional muscle distribution.
 
-Only after the semantic model survives that second pass should the project choose the long-term 3D/UI stack.
+The project should still avoid choosing the long-term 3D/UI stack until those semantic boundaries are clearer.
