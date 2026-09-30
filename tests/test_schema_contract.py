@@ -211,6 +211,10 @@ class CharacterSchemaContractTests(unittest.TestCase):
                 "validator": "additionalProperties",
                 "instance_path": ["body"],
             },
+            "body-renderer-target-weight.character.json": {
+                "validator": "additionalProperties",
+                "instance_path": ["body"],
+            },
             "body-posture-field.character.json": {
                 "validator": "additionalProperties",
                 "instance_path": ["body"],
