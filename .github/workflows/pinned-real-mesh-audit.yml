@@ -2,14 +2,6 @@ name: Pinned real mesh audit
 
 on:
   workflow_dispatch:
-  # Bootstrap-only trigger for Issue #40.
-  # Remove after the first successful pinned-asset audit.
-  push:
-    branches:
-      - test/pinned-real-mesh-audit
-    paths:
-      - "prototype/real-mesh/**"
-      - ".github/workflows/pinned-real-mesh-audit.yml"
 
 permissions:
   contents: read
