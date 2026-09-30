@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { MAKEHUMAN_ASSET_MANIFEST } from "../asset-manifest.mjs";
+import {
+  MAKEHUMAN_ASSET_MANIFEST,
+  MAKEHUMAN_MEASUREMENT_TARGETS,
+} from "../asset-manifest.mjs";
 import {
   MAKEHUMAN_FIELD_MAPPING,
+  getMakeHumanMeasurementTargetPair,
   makeHumanShapePriorSeed,
   planMakeHumanMapping,
 } from "../makehuman-adapter.mjs";
@@ -42,6 +46,41 @@ test("asset manifest is pinned to a CC0 graphical asset source", () => {
   assert.equal(
     MAKEHUMAN_ASSET_MANIFEST.upstreamCodeLicense,
     "AGPL-3.0-or-later",
+  );
+});
+
+test("first shoulder target pair is pinned to exact upstream assets", () => {
+  const pair = MAKEHUMAN_MEASUREMENT_TARGETS.shoulderBreadthCm;
+
+  assert.equal(pair.calibrationStatus, "uncalibrated");
+  assert.equal(
+    pair.decrease.blobSha,
+    "eb25c3214db91206340ba5e28fcd7f29fadae4a9",
+  );
+  assert.equal(
+    pair.increase.blobSha,
+    "0d6ba8d828c7d9ee42ef18a814d413712214ac21",
+  );
+  assert.match(
+    pair.decrease.url,
+    /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+  );
+  assert.match(
+    pair.increase.url,
+    /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+  );
+});
+
+test("adapter exposes only explicitly pinned target pairs", () => {
+  const pair = getMakeHumanMeasurementTargetPair("shoulderBreadthCm");
+
+  assert.equal(
+    pair.modifier,
+    "measure/measure-shoulder-dist-decr|incr",
+  );
+  assert.throws(
+    () => getMakeHumanMeasurementTargetPair("waistBreadthCm"),
+    /No pinned MakeHuman target pair/,
   );
 });
 

@@ -1,4 +1,7 @@
-import { MAKEHUMAN_ASSET_MANIFEST } from "./asset-manifest.mjs";
+import {
+  MAKEHUMAN_ASSET_MANIFEST,
+  MAKEHUMAN_MEASUREMENT_TARGETS,
+} from "./asset-manifest.mjs";
 
 export const MAKEHUMAN_FIELD_MAPPING = Object.freeze({
   heightCm: {
@@ -187,4 +190,13 @@ export function planMakeHumanMapping(body) {
       "No unsupported SCC measurement is silently approximated.",
     ],
   };
+}
+
+export function getMakeHumanMeasurementTargetPair(field) {
+  const pair = MAKEHUMAN_MEASUREMENT_TARGETS[field];
+  if (!pair) {
+    throw new RangeError(`No pinned MakeHuman target pair for field: ${field}`);
+  }
+
+  return pair;
 }
