@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "example.mina-kisaragi",
+  "identity": {
+    "displayName": "Mina Kisaragi",
+    "givenName": "Mina",
+    "familyName": "Kisaragi",
+    "birthDate": "2001-09-22",
+    "gender": "woman",
+    "species": "human",
+    "preferredLocale": "ja-JP"
+  },
+  "body": {
+    "heightCm": 162,
+    "massKg": 54,
+    "measurements": {
+      "shoulderBreadthCm": 38,
+      "chestCircumferenceCm": 88,
+      "underbustCircumferenceCm": 72,
+      "waistCircumferenceCm": 66,
+      "hipCircumferenceCm": 91,
+      "inseamCm": 74,
+      "footLengthCm": 25
+    },
+    "notes": "Soft facial impression and balanced proportions."
+  },
+  "appearance": {
+    "hair": {
+      "color": {
+        "srgbHex": "#2B211D",
+        "label": "dark brown"
+      },
+      "lengthCm": 42,
+      "style": "straight, shoulder-length"
+    },
+    "eyes": {
+      "irisColor": {
+        "srgbHex": "#4A352A",
+        "label": "brown"
+      }
+    },
+    "skin": {
+      "tone": {
+        "srgbHex": "#D8B39A",
+        "label": "light warm"
+      }
+    },
+    "distinguishingFeatures": [
+      "slightly thick eyebrows",
+      "gentle facial impression"
+    ]
+  },
+  "personality": {
+    "model": "scc-core-v1",
+    "traits": {
+      "openness": 0.61,
+      "conscientiousness": 0.67,
+      "extraversion": 0.46,
+      "agreeableness": 0.74,
+      "emotionalStability": 0.58
+    },
+    "description": "Warm and approachable, somewhat reserved at first, with a practical streak."
+  },
+  "background": {
+    "summary": "A contemporary fictional character used to exercise the draft schema.",
+    "upbringing": "Raised in a stable urban household.",
+    "education": [
+      "general upper-secondary education"
+    ],
+    "occupations": [
+      "office worker"
+    ],
+    "familyNotes": "Maintains ordinary family relationships."
+  },
+  "preferences": {
+    "affinities": [
+      {
+        "subject": "quiet cafes",
+        "value": 0.7
+      },
+      {
+        "subject": "crowded nightlife",
+        "value": -0.45,
+        "note": "Usually prefers calmer social settings."
+      },
+      {
+        "subject": "winter scenery",
+        "value": 0.8
+      }
+    ]
+  },
+  "metadata": {
+    "tags": [
+      "example",
+      "human",
+      "draft-v1"
+    ],
+    "notes": "Representative example only; not intended as a canonical Snowfall character.",
+    "generation": {
+      "generator": "snowfall-character-creator",
+      "version": "0.0.0-design",
+      "seed": "example-seed-0001"
+    }
+  },
+  "extensions": {
+    "org.snowfall.example": {
+      "purpose": "Demonstrate preservation of namespaced consumer data."
+    }
+  }
+}
