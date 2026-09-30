@@ -104,7 +104,8 @@ The current UI exposes:
 - abdominal depth;
 - hip circumference, breadth, and buttock depth;
 - body-fat fraction;
-- muscularity.
+- muscularity;
+- separate preview-only posture controls for pelvic tilt, trunk flexion, shoulder protraction, head-forward translation, and head pitch.
 
 The preview also consumes the other Body Model measurements from the representative example.
 
@@ -194,19 +195,15 @@ Head circumference alone cannot determine:
 
 Detailed face/head creation should probably become its own model rather than continuously expanding Body Model.
 
-### 7. Posture is not body shape
+### 7. Posture is not body shape — boundary resolved
 
-The same body can stand with different spinal curvature, pelvic tilt, shoulder position, and head posture.
+The same morphology can be displayed with different pelvic orientation, trunk flexion, shoulder position, and head posture.
 
-Posture should not silently alter canonical body measurements.
+The prototype now supplies posture independently through `scc-preview-posture-v0`. Body mapping remains unchanged, while the renderer applies preview posture transforms afterward.
 
-A future creator may treat posture as:
+Current preview posture fields are not Character Schema and are intentionally disposable. A future habitual-posture tendency, if needed, must be designed separately from both Body Model and current pose state.
 
-- preview state;
-- a separate stable posture tendency;
-- or a pose/animation concern.
-
-The current prototype leaves it unresolved.
+See [Posture Boundary](posture-boundary.md).
 
 ### 8. Left/right asymmetry is absent
 
@@ -288,8 +285,8 @@ These still need further validation before any promotion into the schema:
 These are likely better handled elsewhere:
 
 - detailed head/face geometry;
-- posture;
-- pose;
+- habitual posture / mannerism;
+- current pose;
 - asymmetry;
 - clothing;
 - hair;
@@ -310,7 +307,7 @@ A new body field should be added only when all are true:
 
 The recommended follow-up is not a production UI.
 
-The breadth/depth, shoulder-slope, limb-segment, and surface-boundary passes have now been applied. Local chest/abdomen/glute distribution remains renderer-local by design. The next architectural question is whether posture belongs in character body data, creator presentation state, or a separate pose/posture model.
+The breadth/depth, shoulder-slope, limb-segment, surface-boundary, and posture-boundary passes have now been applied. Local chest/abdomen/glute distribution remains renderer-local by design, and current posture is separate preview/runtime state. The next body-model question is whether asymmetry or regional muscle distribution belongs in v1, or whether Body Model v1 is sufficiently complete to freeze for the first real human mesh.
 
 The project should still avoid choosing the long-term 3D/UI stack until those semantic boundaries are clearer.
 
