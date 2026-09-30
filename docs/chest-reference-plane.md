@@ -46,6 +46,7 @@ Current policy:
 lower body-height fraction: 0.62
 upper body-height fraction: 0.78
 sample count:               33
+appendage merge jump ratio: 1.25
 ```
 
 The fractions are measured from body-only `minY` to body-only `maxY`.
@@ -71,13 +72,90 @@ Detached loops such as arms are allowed to exist.
 
 They do not replace the central torso loop when the torso contains the supplied body center.
 
+
+## Axilla / appendage-merge boundary
+
+The first real pinned-mesh audit exposed an important failure mode.
+
+For the representative feminine 162 cm body with explicit 38 cm shoulders, the unmodified torso scan produced approximately:
+
+```text
+body-height fraction 0.73 -> 88.30 cm, 3 loops
+body-height fraction 0.74 -> 88.53 cm, 3 loops
+body-height fraction 0.75 -> 88.90 cm, 3 loops
+body-height fraction 0.76 -> 128.69 cm, 1 loop
+body-height fraction 0.77 -> 120.46 cm, 1 loop
+body-height fraction 0.78 -> 115.33 cm, 1 loop
+```
+
+The abrupt jump at ~0.76 occurs when previously detached arm/torso contours merge into one connected contour above the intended below-axilla chest level.
+
+A pure "maximum perimeter" rule therefore selected an anatomically invalid chest contour.
+
+### Experimental geometric rule
+
+SCC now detects the first **appendage-merge discontinuity** between adjacent valid samples when both conditions hold:
+
+1. the closed-loop count decreases; and
+2. the selected central-loop perimeter increases by at least `appendageMergeJumpRatio`.
+
+The current experimental threshold is:
+
+```text
+appendageMergeJumpRatio = 1.25
+```
+
+A loop-count change by itself is insufficient.
+
+A perimeter jump by itself is also insufficient.
+
+This deliberately requires both topology and geometry evidence.
+
+### Candidate exclusion
+
+When a boundary is detected:
+
+```text
+last valid below-boundary sample
+          |
+          v
+appendage merge boundary  <-- excluded
+          |
+          v
+all higher samples        <-- excluded
+```
+
+The excluded samples remain in diagnostics with:
+
+```text
+status: excluded-above-appendage-merge
+```
+
+The finder then selects the maximum valid torso perimeter only from samples below the boundary.
+
+### Why this remains experimental
+
+This is an SCC-owned operational approximation of "below the axilla."
+
+It is not asserted to be a universal anthropometric definition.
+
+Stable promotion requires confirming the boundary behavior across:
+
+- feminine / neutral / masculine shape priors;
+- representative height and shoulder values;
+- chest target deformations;
+- future renderer adapters.
+
+If a renderer can provide a stronger renderer-independent axilla landmark contract later, that can replace this heuristic without changing Character Schema.
+
 ## Selected plane
 
 Valid candidates are ranked by:
 
-1. greater torso perimeter;
-2. if equal within tolerance, closer normalized height to the search-band midpoint;
-3. if still tied, lower normalized height.
+1. exclude the detected appendage-merge boundary and every higher slice;
+2. among remaining candidates, greater torso perimeter;
+3. if equal within tolerance, closer normalized height to the search-band midpoint;
+4. if still tied, lower normalized height.
 
 This rule is deterministic.
 

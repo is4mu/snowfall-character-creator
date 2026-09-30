@@ -15,6 +15,7 @@ export const MAKEHUMAN_CHEST_SEARCH_POLICY = Object.freeze({
   upperBodyHeightFraction: 0.78,
   sampleCount: 33,
   tieToleranceUnits: 1e-9,
+  appendageMergeJumpRatio: 1.25,
 });
 
 function validateSearchPolicy({
@@ -22,6 +23,7 @@ function validateSearchPolicy({
   upperBodyHeightFraction,
   sampleCount,
   tieToleranceUnits,
+  appendageMergeJumpRatio,
 }) {
   if (
     !Number.isFinite(lowerBodyHeightFraction) ||
@@ -42,6 +44,76 @@ function validateSearchPolicy({
       "tieToleranceUnits must be a finite non-negative number",
     );
   }
+  if (
+    !Number.isFinite(appendageMergeJumpRatio) ||
+    appendageMergeJumpRatio <= 1
+  ) {
+    throw new TypeError(
+      "appendageMergeJumpRatio must be a finite number > 1",
+    );
+  }
+}
+
+export function detectAppendageMergeBoundary(
+  candidates,
+  {
+    jumpRatio =
+      MAKEHUMAN_CHEST_SEARCH_POLICY.appendageMergeJumpRatio,
+  } = {},
+) {
+  if (!Array.isArray(candidates)) {
+    throw new TypeError("candidates must be an array");
+  }
+  if (!Number.isFinite(jumpRatio) || jumpRatio <= 1) {
+    throw new TypeError("jumpRatio must be a finite number > 1");
+  }
+
+  const ordered = [...candidates].sort(
+    (a, b) => a.index - b.index,
+  );
+
+  for (let i = 1; i < ordered.length; i += 1) {
+    const previous = ordered[i - 1];
+    const current = ordered[i];
+
+    if (current.index !== previous.index + 1) {
+      continue;
+    }
+
+    if (
+      !Number.isFinite(previous.perimeterUnits) ||
+      !Number.isFinite(current.perimeterUnits) ||
+      previous.perimeterUnits <= 0 ||
+      !Number.isInteger(previous.loopCount) ||
+      !Number.isInteger(current.loopCount)
+    ) {
+      throw new TypeError(
+        "candidate perimeterUnits and loopCount must be valid",
+      );
+    }
+
+    const loopLoss = previous.loopCount - current.loopCount;
+    const perimeterRatio =
+      current.perimeterUnits / previous.perimeterUnits;
+
+    if (loopLoss > 0 && perimeterRatio >= jumpRatio) {
+      return {
+        lowerSampleIndex: previous.index,
+        boundarySampleIndex: current.index,
+        lowerHeightFraction: previous.heightFraction,
+        boundaryHeightFraction: current.heightFraction,
+        previousLoopCount: previous.loopCount,
+        boundaryLoopCount: current.loopCount,
+        loopLoss,
+        previousPerimeterUnits: previous.perimeterUnits,
+        boundaryPerimeterUnits: current.perimeterUnits,
+        perimeterRatio,
+        jumpRatio,
+      };
+    }
+  }
+
+  return null;
 }
 
 function summarizeSample({
@@ -77,6 +149,8 @@ export function findChestReferencePlane({
   sampleCount = MAKEHUMAN_CHEST_SEARCH_POLICY.sampleCount,
   tieToleranceUnits =
     MAKEHUMAN_CHEST_SEARCH_POLICY.tieToleranceUnits,
+  appendageMergeJumpRatio =
+    MAKEHUMAN_CHEST_SEARCH_POLICY.appendageMergeJumpRatio,
   center = null,
   crossSectionOptions = {},
 }) {
@@ -85,6 +159,7 @@ export function findChestReferencePlane({
     upperBodyHeightFraction,
     sampleCount,
     tieToleranceUnits,
+    appendageMergeJumpRatio,
   });
 
   const bounds = measurePositionBoundsUnits(
@@ -165,6 +240,7 @@ export function findChestReferencePlane({
       heightFraction,
       planeY,
       perimeterUnits: selectedLoop.perimeterUnits,
+      loopCount: crossSection.loops.length,
       selectedLoop,
     };
     candidates.push(candidate);
@@ -175,17 +251,44 @@ export function findChestReferencePlane({
     }));
   }
 
-  if (candidates.length === 0) {
+  const appendageMergeBoundary =
+    detectAppendageMergeBoundary(candidates, {
+      jumpRatio: appendageMergeJumpRatio,
+    });
+
+  const eligibleCandidates = appendageMergeBoundary
+    ? candidates.filter(
+        (candidate) =>
+          candidate.index <
+          appendageMergeBoundary.boundarySampleIndex,
+      )
+    : candidates;
+
+  if (appendageMergeBoundary) {
+    for (const sample of samples) {
+      if (
+        sample.status === "candidate" &&
+        sample.index >=
+          appendageMergeBoundary.boundarySampleIndex
+      ) {
+        sample.status = "excluded-above-appendage-merge";
+      }
+    }
+  }
+
+  if (eligibleCandidates.length === 0) {
     return {
       contract: CHEST_REFERENCE_PLANE_CONTRACT,
       status: "no-valid-slice",
       experimental: true,
       bodyCenter,
       bodyBounds: bounds,
+      appendageMergeBoundary,
       searchBand: {
         lowerBodyHeightFraction,
         upperBodyHeightFraction,
         sampleCount,
+        appendageMergeJumpRatio,
       },
       selected: null,
       samples,
@@ -195,7 +298,7 @@ export function findChestReferencePlane({
   const midpoint =
     (lowerBodyHeightFraction + upperBodyHeightFraction) / 2;
 
-  const ranked = [...candidates].sort((a, b) => {
+  const ranked = [...eligibleCandidates].sort((a, b) => {
     const perimeterDelta = b.perimeterUnits - a.perimeterUnits;
     if (Math.abs(perimeterDelta) > tieToleranceUnits) {
       return perimeterDelta;
@@ -218,10 +321,12 @@ export function findChestReferencePlane({
     experimental: true,
     bodyCenter,
     bodyBounds: bounds,
+    appendageMergeBoundary,
     searchBand: {
       lowerBodyHeightFraction,
       upperBodyHeightFraction,
       sampleCount,
+      appendageMergeJumpRatio,
     },
     selected: {
       sampleIndex: selected.index,
