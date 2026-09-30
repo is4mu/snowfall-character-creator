@@ -36,6 +36,7 @@ jobs:
         run: |
           node --check prototype/real-mesh/asset-manifest.mjs
           node --check prototype/real-mesh/makehuman-adapter.mjs
+          node --check prototype/real-mesh/makehuman-debug-target.mjs
           node --check prototype/real-mesh/makehuman-geometry.mjs
           node --check prototype/real-mesh/app.mjs
 
