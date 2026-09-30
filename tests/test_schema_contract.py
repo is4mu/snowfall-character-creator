@@ -69,6 +69,23 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "1.0.0-draft.1",
         )
 
+    def test_personality_v1_has_exactly_30_canonical_traits(self) -> None:
+        domain_defs = [
+            "personalityOpenness",
+            "personalitySelfRegulation",
+            "personalitySocial",
+            "personalityInterpersonal",
+            "personalityIntegrity",
+            "personalityEmotional",
+            "personalityBehavioral",
+            "personalityAttachment",
+        ]
+        trait_count = sum(
+            len(self.schema["$defs"][domain_name]["required"])
+            for domain_name in domain_defs
+        )
+        self.assertEqual(trait_count, 30)
+
     def test_all_examples_are_valid(self) -> None:
         examples = sorted(EXAMPLES_DIR.glob("*.json"))
         self.assertGreater(len(examples), 0, "No valid example fixtures found.")
