@@ -148,57 +148,155 @@
     "body": {
       "type": "object",
       "additionalProperties": false,
+      "required": [
+        "model"
+      ],
       "properties": {
-        "heightCm": {
-          "type": "number",
-          "exclusiveMinimum": 0,
-          "maximum": 1000,
-          "description": "Standing height in centimeters."
+        "model": {
+          "const": "scc-body-v1",
+          "description": "Canonical Snowfall Character Creator body model used by this schema revision."
         },
-        "massKg": {
-          "type": "number",
-          "exclusiveMinimum": 0,
-          "maximum": 1000,
-          "description": "Body mass in kilograms."
+        "shapePrior": {
+          "type": "string",
+          "enum": [
+            "masculine",
+            "feminine",
+            "neutral"
+          ],
+          "description": "Optional under-specification prior for body-shape generation. It is a visual/morphological authoring prior, not gender, sex, or identity, and must never be inferred from identity.gender."
         },
         "measurements": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "heightCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Standing stature in centimeters."
+            },
+            "massKg": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "description": "Body mass in kilograms."
+            },
+            "armSpanCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Horizontal fingertip-to-fingertip span with arms extended."
+            },
+            "sittingHeightCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Vertical sitting height used to capture torso-to-leg proportion."
+            },
             "shoulderBreadthCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Biacromial shoulder breadth."
             },
             "chestCircumferenceCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Horizontal torso circumference at the chest/bust level used by the creator."
             },
             "underbustCircumferenceCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Horizontal torso circumference directly below the breast/chest tissue where applicable."
             },
             "waistCircumferenceCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Waist circumference at the documented creator landmark."
             },
             "hipCircumferenceCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Maximum horizontal circumference around the hips/buttocks."
+            },
+            "neckCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Neck circumference."
+            },
+            "upperArmCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Upper-arm circumference."
+            },
+            "forearmCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Forearm circumference."
+            },
+            "wristCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Wrist circumference."
+            },
+            "thighCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Thigh circumference."
+            },
+            "calfCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Calf circumference."
+            },
+            "ankleCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Ankle circumference."
+            },
+            "armLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Shoulder-to-hand arm length using the documented creator landmark convention."
             },
             "inseamCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Crotch-to-floor inside-leg length."
+            },
+            "handLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Hand length."
+            },
+            "handBreadthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Hand breadth."
             },
             "footLengthCm": {
-              "$ref": "#/$defs/bodyMeasurementCm"
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Foot length."
+            },
+            "footBreadthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Foot breadth."
+            },
+            "headCircumferenceCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Maximum head circumference."
             }
-          }
+          },
+          "description": "Renderer-independent anthropometric measurements. Field names carry canonical metric units."
+        },
+        "composition": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bodyFatFraction": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Estimated fraction of total body mass represented by body fat. Optional authoring data, not a medical assessment."
+            },
+            "muscularity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Normalized visual muscular-development tendency used for character shape authoring; 0 = minimal visible muscular development, 1 = exceptionally pronounced muscular development."
+            }
+          },
+          "description": "Optional body-composition information that affects shape but is not captured fully by linear measurements."
         },
         "notes": {
           "type": "string",
           "maxLength": 2000,
-          "description": "Optional author notes for durable physical characteristics not yet represented structurally."
+          "description": "Optional author notes for durable body characteristics not yet represented structurally."
         }
       }
     },
     "bodyMeasurementCm": {
       "type": "number",
       "exclusiveMinimum": 0,
-      "maximum": 1000
+      "maximum": 1000,
+      "description": "Positive anthropometric measurement in centimeters."
     },
     "appearance": {
       "type": "object",
