@@ -5,11 +5,15 @@ import {
   getMakeHumanMeasurementTargetPair,
   planMakeHumanMapping,
 } from "./makehuman-adapter.mjs";
-import { applyRendererTargetDebug } from "./makehuman-debug-target.mjs";
+import { solveShoulderBreadthTarget } from "./makehuman-calibration.mjs";
 import {
   parseMakeHumanObj,
   parseMakeHumanTarget,
 } from "./makehuman-geometry.mjs";
+import {
+  assertPinnedShoulderLandmarks,
+  measurePositionArrayHeightUnits,
+} from "./makehuman-measurement.mjs";
 
 const viewport = document.querySelector("#viewport");
 const diagnostics = document.querySelector("#diagnostics");
@@ -18,8 +22,11 @@ const assetStatus = document.querySelector("#asset-status");
 const heightInput = document.querySelector("#height");
 const heightValue = document.querySelector("#height-value");
 const priorSelect = document.querySelector("#shape-prior");
-const shoulderTargetInput = document.querySelector("#shoulder-target-debug");
-const shoulderTargetValue = document.querySelector("#shoulder-target-value");
+const shoulderBreadthInput = document.querySelector("#shoulder-breadth");
+const shoulderBreadthValue = document.querySelector("#shoulder-breadth-value");
+const shoulderCalibrationStatus = document.querySelector(
+  "#shoulder-calibration-status",
+);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf3f3f3);
@@ -58,7 +65,7 @@ let basePositions;
 let currentNativeHeight = null;
 let shoulderTargetPair;
 let shoulderTargetDeltas;
-let shoulderTargetWeight = 0;
+let shoulderCalibration;
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -83,22 +90,6 @@ function neutralGrayMaterial() {
     metalness: 0,
     side: THREE.DoubleSide,
   });
-}
-
-function measurePositionArrayHeight(positions) {
-  let minY = Infinity;
-  let maxY = -Infinity;
-
-  for (let i = 1; i < positions.length; i += 3) {
-    minY = Math.min(minY, positions[i]);
-    maxY = Math.max(maxY, positions[i]);
-  }
-
-  const height = maxY - minY;
-  if (!Number.isFinite(height) || height <= 0) {
-    throw new TypeError("mesh position array has no positive height");
-  }
-  return height;
 }
 
 function fitMeshToCanonicalHeight(targetHeightM) {
@@ -131,14 +122,24 @@ function renderDiagnostics() {
       shapePriorSeed: plan.shapePriorSeed,
       authoredCoverage,
       calibrationQueue: plan.calibrationQueue,
-      rendererTargetDebug: {
-        field: "measurements.shoulderBreadthCm",
-        signedWeight: shoulderTargetWeight,
-        calibrated: false,
-        canonicalShoulderBreadthCm:
-          workingBody.measurements?.shoulderBreadthCm ?? null,
-        targetsLoaded: Boolean(shoulderTargetDeltas),
-      },
+      prototypeCalibrations: plan.prototypeCalibrations,
+      shoulderCalibration: shoulderCalibration
+        ? {
+            contract: shoulderCalibration.contract,
+            status: shoulderCalibration.status,
+            experimental: shoulderCalibration.experimental,
+            targetCm: shoulderCalibration.targetCm,
+            measuredCm: shoulderCalibration.measuredCm,
+            residualCm: shoulderCalibration.residualCm,
+            minReachableCm: shoulderCalibration.minReachableCm,
+            maxReachableCm: shoulderCalibration.maxReachableCm,
+            rendererWeight: shoulderCalibration.weight,
+            iterations: shoulderCalibration.iterations,
+          }
+        : {
+            status: "not-ready",
+            targetCm: workingBody.measurements?.shoulderBreadthCm ?? null,
+          },
       limitations: plan.limitations,
     },
     null,
@@ -166,7 +167,6 @@ async function loadShoulderDebugTargets() {
   ]);
 
   shoulderTargetDeltas = {decreaseDeltas, increaseDeltas};
-  shoulderTargetInput.disabled = false;
 }
 
 function updateMeshPositions(positions) {
@@ -178,24 +178,57 @@ function updateMeshPositions(positions) {
   );
   meshRoot.geometry.computeVertexNormals();
   meshRoot.geometry.computeBoundingBox();
-  currentNativeHeight = measurePositionArrayHeight(positions);
+  currentNativeHeight = measurePositionArrayHeightUnits(positions);
 }
 
-function applyShoulderTargetDebug() {
+function calibrateShoulderFromCanonical() {
   if (!meshRoot || !basePositions || !shoulderTargetDeltas || !shoulderTargetPair) {
+    renderDiagnostics();
     return;
   }
 
-  const result = applyRendererTargetDebug({
+  const canonicalHeightCm = workingBody.measurements?.heightCm;
+  const targetShoulderBreadthCm =
+    workingBody.measurements?.shoulderBreadthCm;
+
+  if (
+    !Number.isFinite(canonicalHeightCm) ||
+    !Number.isFinite(targetShoulderBreadthCm)
+  ) {
+    shoulderCalibration = undefined;
+    updateMeshPositions(basePositions);
+    shoulderCalibrationStatus.textContent =
+      "Shoulder calibration requires canonical heightCm and shoulderBreadthCm.";
+    renderDiagnostics();
+    return;
+  }
+
+  shoulderCalibration = solveShoulderBreadthTarget({
     basePositions,
     decreaseDeltas: shoulderTargetDeltas.decreaseDeltas,
     increaseDeltas: shoulderTargetDeltas.increaseDeltas,
-    signedWeight: shoulderTargetWeight,
-    field: "measurements.shoulderBreadthCm",
-    modifier: shoulderTargetPair.modifier,
+    canonicalHeightCm,
+    targetShoulderBreadthCm,
+    toleranceCm: 0.01,
   });
 
-  updateMeshPositions(result.positions);
+  updateMeshPositions(shoulderCalibration.positions);
+  shoulderCalibrationStatus.textContent = JSON.stringify(
+    {
+      status: shoulderCalibration.status,
+      experimental: true,
+      targetCm: shoulderCalibration.targetCm,
+      measuredCm: shoulderCalibration.measuredCm,
+      residualCm: shoulderCalibration.residualCm,
+      rendererWeight: shoulderCalibration.weight,
+      reachableCm: [
+        shoulderCalibration.minReachableCm,
+        shoulderCalibration.maxReachableCm,
+      ],
+    },
+    null,
+    2,
+  );
   renderDiagnostics();
 }
 
@@ -225,11 +258,12 @@ async function loadRealMesh() {
     meshRoot.userData.originalTriangleCount = parsed.triangleCount;
     meshRoot.userData.originalPositions = basePositions;
 
-    currentNativeHeight = measurePositionArrayHeight(basePositions);
+    currentNativeHeight = measurePositionArrayHeightUnits(basePositions);
+    assertPinnedShoulderLandmarks(basePositions);
     scene.add(meshRoot);
 
     await loadShoulderDebugTargets();
-    applyShoulderTargetDebug();
+    calibrateShoulderFromCanonical();
 
     assetStatus.textContent = JSON.stringify(
       {
@@ -241,7 +275,7 @@ async function loadRealMesh() {
         vertexCount: parsed.vertexCount,
         triangleCount: parsed.triangleCount,
         stableSourceVertexIndices: true,
-        nativeObjHeightUnits: measurePositionArrayHeight(basePositions),
+        nativeObjHeightUnits: measurePositionArrayHeightUnits(basePositions),
         shoulderTargetPair: {
           modifier: shoulderTargetPair.modifier,
           calibrationStatus: shoulderTargetPair.calibrationStatus,
@@ -267,7 +301,7 @@ heightInput.addEventListener("input", () => {
   workingBody.measurements ??= {};
   workingBody.measurements.heightCm = Number(heightInput.value);
   heightValue.textContent = `${heightInput.value} cm`;
-  renderDiagnostics();
+  calibrateShoulderFromCanonical();
 });
 
 priorSelect.addEventListener("change", () => {
@@ -275,12 +309,14 @@ priorSelect.addEventListener("change", () => {
   renderDiagnostics();
 });
 
-shoulderTargetInput.addEventListener("input", () => {
-  shoulderTargetWeight = Number(shoulderTargetInput.value);
-  shoulderTargetValue.textContent = shoulderTargetWeight.toFixed(2);
-  applyShoulderTargetDebug();
+shoulderBreadthInput.addEventListener("input", () => {
+  workingBody.measurements ??= {};
+  workingBody.measurements.shoulderBreadthCm =
+    Number(shoulderBreadthInput.value);
+  shoulderBreadthValue.textContent =
+    `${shoulderBreadthInput.value} cm`;
+  calibrateShoulderFromCanonical();
 });
-
 
 document.querySelector("#front-view").addEventListener("click", () => {
   camera.position.set(0, 1.35, 3.4);
@@ -306,9 +342,12 @@ async function loadCharacter() {
   heightInput.value = workingBody.measurements?.heightCm ?? 170;
   heightValue.textContent = `${heightInput.value} cm`;
   priorSelect.value = workingBody.shapePrior ?? "neutral";
-  shoulderTargetInput.value = "0";
-  shoulderTargetInput.disabled = true;
-  shoulderTargetValue.textContent = "0.00";
+  shoulderBreadthInput.value =
+    workingBody.measurements?.shoulderBreadthCm ?? 38;
+  shoulderBreadthValue.textContent =
+    `${shoulderBreadthInput.value} cm`;
+  shoulderCalibrationStatus.textContent =
+    "Loading pinned target assets and experimental renderer landmarks…";
 
   renderDiagnostics();
   await loadRealMesh();
