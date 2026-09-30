@@ -40,6 +40,7 @@ jobs:
           node --check prototype/real-mesh/chest-reference-plane.mjs
           node --check prototype/real-mesh/torso-cross-section-audit.mjs
           node --check prototype/real-mesh/underbust-reference-plane.mjs
+          node --check prototype/real-mesh/reference-plane-visual-audit.mjs
           node --check prototype/real-mesh/asset-manifest.mjs
           node --check prototype/real-mesh/makehuman-adapter.mjs
           node --check prototype/real-mesh/makehuman-debug-target.mjs
