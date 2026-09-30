@@ -107,7 +107,7 @@ The model separates:
 - body-composition authoring data;
 - renderer-specific mapping, which remains outside the core schema.
 
-The current draft supports 22 linear measurements in centimeters plus body mass in kilograms, including overall proportions, torso circumferences, limb circumferences, hand/foot dimensions, and head circumference.
+The current draft supports 28 linear measurements in centimeters plus body mass in kilograms, including overall proportions, torso circumferences, torso breadth/depth, limb circumferences, hand/foot dimensions, and head circumference.
 
 `shapePrior` may be `masculine`, `feminine`, or `neutral`. It is only an under-specification prior for 3D generation. It is not gender identity or biological sex and must never be inferred from `identity.gender`.
 
