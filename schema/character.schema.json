@@ -286,6 +286,28 @@
             "buttockDepthCm": {
               "$ref": "#/$defs/bodyMeasurementCm",
               "description": "Front-to-back body depth at the buttocks."
+            },
+            "shoulderSlopeDeg": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "Symmetric downward shoulder-line angle in degrees from horizontal, measured from the neck-side shoulder root toward the lateral shoulder point. A renderer-independent authoring measurement, not a pose rotation."
+            },
+            "upperArmLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Upper-arm segment length from the lateral shoulder joint region to the elbow landmark."
+            },
+            "forearmLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Forearm segment length from the elbow landmark to the wrist landmark."
+            },
+            "thighLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Thigh segment length from the hip joint region to the knee landmark."
+            },
+            "lowerLegLengthCm": {
+              "$ref": "#/$defs/bodyMeasurementCm",
+              "description": "Lower-leg segment length from the knee landmark to the ankle landmark."
             }
           },
           "description": "Renderer-independent anthropometric measurements. Field names carry canonical metric units."
