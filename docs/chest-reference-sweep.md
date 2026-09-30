@@ -158,3 +158,157 @@ This audit does not:
 - encode the manual screenshot as a fixed height offset.
 
 All renderer candidates start from immutable shape-prior geometry.
+
+
+## Verified pinned real-mesh result
+
+Manual workflow:
+
+```text
+run: 36721172203
+head: 636165190a943df2200cfca960c21be1013c65b2
+conclusion: success
+```
+
+### Primary observed case: feminine / 162 / shoulder 39
+
+Measured chest range across 81 bust weights:
+
+```text
+76.39 .. 106.67 cm
+```
+
+Two discontinuous chest-reference jumps were detected.
+
+#### Jump 1
+
+```text
+bust weight:      0.650 -> 0.675
+measured chest: 100.390 -> 100.809 cm
+chest fraction:   0.750 -> 0.740
+axilla boundary:  0.755 -> 0.755
+```
+
+Immediately before the jump, the leading eligible perimeter candidates were nearly tied:
+
+```text
+0.750 : 9.8517519635 units
+0.740 : 9.8504034977 units
+0.730 : 9.8416867818 units
+```
+
+Immediately after the jump:
+
+```text
+0.740 : 9.8929141604 units
+0.750 : 9.8912953344 units
+0.730 : 9.8864217153 units
+```
+
+The winner changes because of a very small perimeter ordering change; the appendage-merge boundary does not move.
+
+#### Jump 2
+
+```text
+bust weight:      0.750 -> 0.775
+measured chest: 102.110 -> 102.562 cm
+chest fraction:   0.740 -> 0.730
+axilla boundary:  0.755 -> 0.755
+```
+
+Immediately before:
+
+```text
+0.740 : 10.0205996088 units
+0.730 : 10.0202603503 units
+0.735 : 10.0117180853 units
+```
+
+Immediately after:
+
+```text
+0.730 : 10.0648973524 units
+0.740 : 10.0632173862 units
+0.735 : 10.0558197570 units
+```
+
+Again the switch is caused by competing torso maxima rather than an arm/axilla topology event.
+
+### Underbust behavior around the jumps
+
+The experimental underbust finder remained `selected` throughout both jump neighborhoods.
+
+Around jump 1:
+
+```text
+chest fraction     0.750 -> 0.740
+underbust fraction 0.70668 -> 0.70796
+```
+
+Around jump 2:
+
+```text
+chest fraction     0.740 -> 0.730
+underbust fraction ~0.70514 -> ~0.70643
+```
+
+No underbust status or fraction discontinuity was detected by the audit helper.
+
+The apparent chest-to-underbust vertical distance changes sharply because the **chest reference jumps**, not because the underbust landmark jumps.
+
+### Shoulder-38 feminine control
+
+The lower-density control also detected a chest-reference switch:
+
+```text
+bust weight:      0.250 -> 0.375
+measured chest:  92.907 -> 95.019 cm
+chest fraction:   0.750 -> 0.730
+axilla boundary:  0.755 -> 0.755
+```
+
+This coarse control is consistent with the earlier manual impression that switching can appear around the low/mid-90 cm region when shoulder breadth is 38 cm.
+
+The exact threshold was not localized because this control used only 17 bust-weight samples.
+
+### Neutral / masculine controls
+
+At the current 17-sample control density:
+
+```text
+neutral:   no detected >1-step chest-reference jump
+masculine: no detected >1-step chest-reference jump
+```
+
+This does not prove perfect continuity; it only shows no discontinuity at the audit's current control resolution.
+
+## Root-cause conclusion
+
+The current chest rule is unstable because it selects the **largest eligible horizontal perimeter**.
+
+The pinned real mesh contains several adjacent thorax levels with almost equal perimeter. Bust deformation changes their ordering by tiny amounts, so the selected chest plane can jump by 1–2 cm-height samples even though the underlying body deformation is continuous.
+
+The appendage/axilla exclusion is functioning as designed and is not the source of these jumps.
+
+## Semantic mismatch with SCC protocol
+
+SCC's Body Measurement Protocol defines the chest reference level as:
+
+> the horizontal plane passing through the greatest anterior chest/bust prominence of the upper torso while excluding the arms.
+
+For bodies without a distinct breast prominence, the protocol falls back to the visually/structurally fullest thoracic level below the axilla and above the natural waist.
+
+Therefore `largest horizontal perimeter` should not remain the primary selection rule for bodies with a distinct anterior chest/bust prominence.
+
+## Next design decision
+
+Replace the current independent-reference approach with a protocol-aligned thorax landmark analysis:
+
+1. derive an anterior surface profile from central torso cross-sections;
+2. identify whether a distinct chest/bust prominence exists;
+3. when it exists, select the chest level from the greatest stable anterior prominence;
+4. derive underbust from the related lower-boundary/profile minimum;
+5. only when no distinct anterior prominence exists, use a documented fullest-thorax fallback;
+6. retain explicit unsupported/ambiguous states rather than silently switching between nearly tied perimeter maxima.
+
+The replacement must be validated on the same pinned sweep that exposed this bug before it is used by the coupled chest solver.
