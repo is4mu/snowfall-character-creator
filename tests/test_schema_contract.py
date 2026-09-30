@@ -206,6 +206,10 @@ class CharacterSchemaContractTests(unittest.TestCase):
                 "validator": "enum",
                 "instance_path": ["body", "shapePrior"],
             },
+            "body-renderer-local-field.character.json": {
+                "validator": "additionalProperties",
+                "instance_path": ["body"],
+            },
             "body-shoulder-slope-out-of-range.character.json": {
                 "validator": "maximum",
                 "instance_path": [
