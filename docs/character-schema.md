@@ -115,9 +115,9 @@ Composition currently supports optional `bodyFatFraction` and normalized `muscul
 
 Regional clothing sizes, shoe sizes, bra sizes, renderer morph weights, and mesh identifiers remain derived or adapter-owned rather than canonical body data.
 
-`abdominalDepthCm` is canonical because it is a physical depth measurement. Local chest, abdomen, and glute front/back distribution remains renderer-local; subjective morph sliders are not persisted until stable renderer-independent semantics exist. Posture, asymmetry, and regional muscle distribution remain deferred.
+`abdominalDepthCm` is canonical because it is a physical depth measurement. Local chest, abdomen, and glute front/back distribution remains renderer-local; subjective morph sliders are not persisted until stable renderer-independent semantics exist. Posture is explicitly outside Body Model v1 and belongs to preview/runtime state unless a future habitual-posture model is separately designed. Asymmetry and regional muscle distribution remain deferred.
 
-See [Body Model v1](body-model.md) for the complete measurement list and [Surface Shape Boundary](surface-shape-boundary.md) for the canonical-versus-renderer-local decision.
+See [Body Model v1](body-model.md), [Surface Shape Boundary](surface-shape-boundary.md), and [Posture Boundary](posture-boundary.md) for the current body/renderer ownership rules.
 
 ## Appearance
 
