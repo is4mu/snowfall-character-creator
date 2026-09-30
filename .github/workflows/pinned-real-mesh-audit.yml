@@ -27,9 +27,9 @@ jobs:
             --output artifacts/pinned-real-mesh-audit.json
 
       - name: Upload audit report
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pinned-real-mesh-audit
           path: artifacts/pinned-real-mesh-audit.json
-          if-no-files-found: error
+          if-no-files-found: warn
