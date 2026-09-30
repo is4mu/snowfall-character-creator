@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   MAKEHUMAN_ASSET_MANIFEST,
   MAKEHUMAN_MEASUREMENT_TARGETS,
+  MAKEHUMAN_SHAPE_PRIOR_TARGETS,
 } from "../asset-manifest.mjs";
 import {
   MAKEHUMAN_FIELD_MAPPING,
@@ -47,6 +48,39 @@ test("asset manifest is pinned to a CC0 graphical asset source", () => {
     MAKEHUMAN_ASSET_MANIFEST.upstreamCodeLicense,
     "AGPL-3.0-or-later",
   );
+});
+
+test("shape prior bundle pins three assets per endpoint to the same commit", () => {
+  assert.equal(
+    MAKEHUMAN_SHAPE_PRIOR_TARGETS.contract,
+    "scc-makehuman-shape-prior-assets-v0",
+  );
+  assert.equal(MAKEHUMAN_SHAPE_PRIOR_TARGETS.feminine.length, 3);
+  assert.equal(MAKEHUMAN_SHAPE_PRIOR_TARGETS.masculine.length, 3);
+
+  const assets = [
+    ...MAKEHUMAN_SHAPE_PRIOR_TARGETS.feminine,
+    ...MAKEHUMAN_SHAPE_PRIOR_TARGETS.masculine,
+  ];
+
+  assert.deepEqual(
+    assets.map((asset) => asset.blobSha),
+    [
+      "a7d2b130667cc81ecd1ca0598da9be27bec1864a",
+      "f862c96add11c31ab1ca75c69e1c67ae5e0e3d5f",
+      "9d1f0cbeedc9a6a51abe33f1ebb5fa7c5a7edbf1",
+      "dd5743e48700267d76596f575bf17b4b5cc3b3e0",
+      "8cd3ef3e9ddb06ee2d166f75f9ac10871251f938",
+      "c3b82f92c5ced85599199cd184b0faf3b3fc6881",
+    ],
+  );
+
+  for (const asset of assets) {
+    assert.match(
+      asset.url,
+      /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+    );
+  }
 });
 
 test("first shoulder target pair is pinned to exact upstream assets", () => {
