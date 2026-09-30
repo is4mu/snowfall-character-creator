@@ -1,9 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-
 import { MAKEHUMAN_ASSET_MANIFEST } from "./asset-manifest.mjs";
 import { planMakeHumanMapping } from "./makehuman-adapter.mjs";
+import { parseMakeHumanObj } from "./makehuman-geometry.mjs";
 
 const viewport = document.querySelector("#viewport");
 const diagnostics = document.querySelector("#diagnostics");
@@ -120,49 +119,58 @@ function renderDiagnostics() {
   sourceView.textContent = JSON.stringify(workingBody, null, 2);
 }
 
-function loadRealMesh() {
-  const loader = new OBJLoader();
-  loader.load(
-    MAKEHUMAN_ASSET_MANIFEST.baseMeshUrl,
-    (object) => {
-      meshRoot = object;
-      meshRoot.name = "Pinned MakeHuman CC0 base mesh";
+async function loadRealMesh() {
+  try {
+    const response = await fetch(MAKEHUMAN_ASSET_MANIFEST.baseMeshUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
-      const material = neutralGrayMaterial();
-      meshRoot.traverse((child) => {
-        if (child.isMesh) {
-          child.material = material;
-          child.castShadow = true;
-        }
-      });
+    const source = await response.text();
+    const parsed = parseMakeHumanObj(source);
 
-      nativeHeight = measureNativeHeight(meshRoot);
-      scene.add(meshRoot);
-      renderDiagnostics();
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(parsed.positions, 3),
+    );
+    geometry.setIndex(new THREE.BufferAttribute(parsed.triangles, 1));
+    geometry.computeVertexNormals();
 
-      assetStatus.textContent = JSON.stringify(
-        {
-          loaded: true,
-          repository: MAKEHUMAN_ASSET_MANIFEST.upstreamRepository,
-          commit: MAKEHUMAN_ASSET_MANIFEST.upstreamCommit,
-          blobSha: MAKEHUMAN_ASSET_MANIFEST.baseMeshBlobSha,
-          license: MAKEHUMAN_ASSET_MANIFEST.assetLicense,
-          nativeObjHeightUnits: nativeHeight,
-        },
-        null,
-        2,
-      );
-    },
-    undefined,
-    (error) => {
-      assetStatus.textContent = [
-        "Failed to load pinned base mesh.",
-        String(error?.message ?? error),
-        "",
-        MAKEHUMAN_ASSET_MANIFEST.baseMeshUrl,
-      ].join("\n");
-    },
-  );
+    meshRoot = new THREE.Mesh(geometry, neutralGrayMaterial());
+    meshRoot.name = "Pinned MakeHuman CC0 base mesh";
+    meshRoot.castShadow = true;
+    meshRoot.userData.originalVertexCount = parsed.vertexCount;
+    meshRoot.userData.originalTriangleCount = parsed.triangleCount;
+    meshRoot.userData.originalPositions = parsed.positions;
+
+    nativeHeight = measureNativeHeight(meshRoot);
+    scene.add(meshRoot);
+    renderDiagnostics();
+
+    assetStatus.textContent = JSON.stringify(
+      {
+        loaded: true,
+        repository: MAKEHUMAN_ASSET_MANIFEST.upstreamRepository,
+        commit: MAKEHUMAN_ASSET_MANIFEST.upstreamCommit,
+        blobSha: MAKEHUMAN_ASSET_MANIFEST.baseMeshBlobSha,
+        license: MAKEHUMAN_ASSET_MANIFEST.assetLicense,
+        vertexCount: parsed.vertexCount,
+        triangleCount: parsed.triangleCount,
+        stableSourceVertexIndices: true,
+        nativeObjHeightUnits: nativeHeight,
+      },
+      null,
+      2,
+    );
+  } catch (error) {
+    assetStatus.textContent = [
+      "Failed to load or parse pinned base mesh.",
+      String(error?.message ?? error),
+      "",
+      MAKEHUMAN_ASSET_MANIFEST.baseMeshUrl,
+    ].join("\n");
+  }
 }
 
 heightInput.addEventListener("input", () => {
@@ -203,7 +211,7 @@ async function loadCharacter() {
   priorSelect.value = workingBody.shapePrior ?? "neutral";
 
   renderDiagnostics();
-  loadRealMesh();
+  await loadRealMesh();
 }
 
 function animate() {
