@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   fetchVerifiedAssetBytes,
   gitBlobShaHex,
-} from "../pinned-asset-loader.mjs";
+} from "../audit/pinned-asset-loader.mjs";
 
 test("Git blob SHA matches Git object semantics", () => {
   assert.equal(
