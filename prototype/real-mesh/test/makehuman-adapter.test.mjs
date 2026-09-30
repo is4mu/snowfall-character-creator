@@ -108,12 +108,44 @@ test("first shoulder target pair is pinned to exact upstream assets", () => {
   );
 });
 
+test("chest target pair is pinned to exact upstream CC0 assets", () => {
+  const pair = MAKEHUMAN_MEASUREMENT_TARGETS.chestCircumferenceCm;
+
+  assert.equal(
+    pair.calibrationStatus,
+    "experimental-coupled-calibration",
+  );
+  assert.equal(
+    pair.decrease.blobSha,
+    "35d7905904790aee386dc6a1180de717f1d6cedf",
+  );
+  assert.equal(
+    pair.increase.blobSha,
+    "096e02648d0c4ff70989f2a78d7c590c60dc4ebb",
+  );
+  assert.match(
+    pair.decrease.url,
+    /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+  );
+  assert.match(
+    pair.increase.url,
+    /a8bc2d54ff0ac92e78ff71431b1023eda42bf482/,
+  );
+});
+
 test("adapter exposes only explicitly pinned target pairs", () => {
   const pair = getMakeHumanMeasurementTargetPair("shoulderBreadthCm");
+  const chest = getMakeHumanMeasurementTargetPair(
+    "chestCircumferenceCm",
+  );
 
   assert.equal(
     pair.modifier,
     "measure/measure-shoulder-dist-decr|incr",
+  );
+  assert.equal(
+    chest.modifier,
+    "measure/measure-bust-circ-decr|incr",
   );
   assert.throws(
     () => getMakeHumanMeasurementTargetPair("waistBreadthCm"),
