@@ -11,6 +11,7 @@ import {
   solveCoupledChestCircumference,
 } from "../makehuman-coupled-calibration.mjs";
 import {
+  applyBidirectionalTarget,
   collectTriangleVertexIndices,
   getObjGroupTriangles,
   parseMakeHumanObj,
@@ -21,6 +22,15 @@ import {
   composeShapePriorEndpoints,
 } from "../makehuman-shape-prior.mjs";
 import {
+  measureShoulderBreadthCm,
+} from "../makehuman-measurement.mjs";
+import {
+  measureChestCircumferenceCm,
+} from "../chest-reference-plane.mjs";
+import {
+  sampleTorsoCrossSectionCurve,
+} from "../torso-cross-section-audit.mjs";
+import {
   fetchVerifiedAssetText,
 } from "./pinned-asset-loader.mjs";
 
@@ -29,6 +39,14 @@ const CANONICAL_AUDIT = Object.freeze({
   shoulderBreadthCm: 38,
   chestCircumferenceCm: 88,
 });
+
+const UNDERBUST_AUDIT_WEIGHTS = Object.freeze([
+  -1,
+  -0.5,
+  0,
+  0.5,
+  1,
+]);
 
 function outputPathFromArgs(args) {
   const index = args.indexOf("--output");
@@ -69,6 +87,25 @@ function assertFloatArrayUnchanged(before, after, label) {
       );
     }
   }
+}
+
+function summarizeCrossSectionCurve(curve) {
+  return {
+    contract: curve.contract,
+    semanticStatus: curve.semanticStatus,
+    lowerBodyHeightFraction: curve.lowerBodyHeightFraction,
+    upperBodyHeightFraction: curve.upperBodyHeightFraction,
+    sampleCount: curve.sampleCount,
+    samples: curve.samples.map((sample) => ({
+      index: sample.index,
+      heightFraction: sample.heightFraction,
+      status: sample.status,
+      circumferenceCm: sample.circumferenceCm,
+      loopCount: sample.loopCount,
+      openChainCount: sample.openChainCount,
+      branchNodeCount: sample.branchNodeCount,
+    })),
+  };
 }
 
 function summarizeSolve(shapePrior, solved) {
@@ -149,17 +186,23 @@ async function main() {
     MAKEHUMAN_MEASUREMENT_TARGETS.shoulderBreadthCm;
   const chestPair =
     MAKEHUMAN_MEASUREMENT_TARGETS.chestCircumferenceCm;
+  const underbustPair =
+    MAKEHUMAN_MEASUREMENT_TARGETS.underbustCircumferenceCm;
 
   const [
     shoulderDecreaseDeltas,
     shoulderIncreaseDeltas,
     bustDecreaseDeltas,
     bustIncreaseDeltas,
+    underbustDecreaseDeltas,
+    underbustIncreaseDeltas,
   ] = await Promise.all([
     loadParsedTarget(shoulderPair.decrease, verifiedAssets),
     loadParsedTarget(shoulderPair.increase, verifiedAssets),
     loadParsedTarget(chestPair.decrease, verifiedAssets),
     loadParsedTarget(chestPair.increase, verifiedAssets),
+    loadParsedTarget(underbustPair.decrease, verifiedAssets),
+    loadParsedTarget(underbustPair.increase, verifiedAssets),
   ]);
 
   const endpoints = composeShapePriorEndpoints({
@@ -168,6 +211,7 @@ async function main() {
   });
 
   const results = [];
+  const underbustExploration = [];
 
   for (const shapePrior of [
     "feminine",
@@ -242,6 +286,103 @@ async function main() {
       `${shapePrior} prior geometry`,
     );
 
+    const selectedChestFraction =
+      reference.selected.heightFraction;
+    const auditLowerFraction =
+      Math.max(0, selectedChestFraction - 0.18);
+    const auditUpperFraction =
+      selectedChestFraction - 0.01;
+    const solvedPositionsBefore =
+      new Float64Array(solved.positions);
+    const baselineCurve = sampleTorsoCrossSectionCurve({
+      positions: solved.positions,
+      triangles: bodyTriangles,
+      bodyVertexIndices,
+      canonicalHeightCm: CANONICAL_AUDIT.heightCm,
+      lowerBodyHeightFraction: auditLowerFraction,
+      upperBodyHeightFraction: auditUpperFraction,
+      sampleCount: 29,
+    });
+
+    const targetEffects = UNDERBUST_AUDIT_WEIGHTS.map(
+      (underbustWeight) => {
+        const positions = applyBidirectionalTarget(
+          solved.positions,
+          underbustDecreaseDeltas,
+          underbustIncreaseDeltas,
+          underbustWeight,
+        );
+        const shoulderMeasuredCm = measureShoulderBreadthCm(
+          positions,
+          CANONICAL_AUDIT.heightCm,
+          undefined,
+          bodyVertexIndices,
+        );
+        const chest = measureChestCircumferenceCm({
+          positions,
+          triangles: bodyTriangles,
+          bodyVertexIndices,
+          canonicalHeightCm: CANONICAL_AUDIT.heightCm,
+        });
+        const curve = sampleTorsoCrossSectionCurve({
+          positions,
+          triangles: bodyTriangles,
+          bodyVertexIndices,
+          canonicalHeightCm: CANONICAL_AUDIT.heightCm,
+          lowerBodyHeightFraction: auditLowerFraction,
+          upperBodyHeightFraction: auditUpperFraction,
+          sampleCount: 29,
+        });
+
+        return {
+          underbustWeight,
+          shoulderMeasuredCm,
+          shoulderDeltaFromTargetCm:
+            shoulderMeasuredCm - CANONICAL_AUDIT.shoulderBreadthCm,
+          chestStatus: chest.status,
+          chestMeasuredCm:
+            chest.status === "measured"
+              ? chest.circumferenceCm
+              : null,
+          chestDeltaFromTargetCm:
+            chest.status === "measured"
+              ? chest.circumferenceCm -
+                CANONICAL_AUDIT.chestCircumferenceCm
+              : null,
+          selectedChestHeightFraction:
+            chest.reference?.selected?.heightFraction ?? null,
+          crossSectionCurve: summarizeCrossSectionCurve(curve),
+        };
+      },
+    );
+
+    assertFloatArrayUnchanged(
+      solvedPositionsBefore,
+      solved.positions,
+      `${shapePrior} solved geometry during underbust audit`,
+    );
+
+    underbustExploration.push({
+      contract: "scc-underbust-semantics-audit-v0",
+      semanticStatus: "exploratory-only",
+      shapePrior,
+      targetPair: {
+        modifier: underbustPair.modifier,
+        calibrationStatus: underbustPair.calibrationStatus,
+      },
+      auditBand: {
+        lowerBodyHeightFraction: auditLowerFraction,
+        upperBodyHeightFraction: auditUpperFraction,
+        relationToChest:
+          "Samples a diagnostic band below the selected chest plane; this band is not an SCC underbust landmark definition.",
+      },
+      baselineCrossSectionCurve:
+        summarizeCrossSectionCurve(baselineCurve),
+      targetEffects,
+      conclusion:
+        "No underbust reference plane or calibration support is inferred by this audit.",
+    });
+
     results.push(summarizeSolve(shapePrior, solved));
   }
 
@@ -268,6 +409,7 @@ async function main() {
     },
     verifiedAssets,
     results,
+    underbustExploration,
   };
 
   await mkdir(dirname(outputPath), { recursive: true });
