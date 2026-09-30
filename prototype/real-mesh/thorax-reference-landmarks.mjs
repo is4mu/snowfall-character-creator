@@ -203,6 +203,67 @@ export function selectThoraxProminencePair(
   };
 }
 
+export function selectThoraxStructuralPair(
+  samples,
+  rawHeightUnits,
+  {
+    minProminenceHeightFraction =
+      THORAX_REFERENCE_POLICY.minProminenceHeightFraction,
+    minPeakSeparationHeightFraction =
+      THORAX_REFERENCE_POLICY.minPeakSeparationHeightFraction,
+    maxPeakSeparationHeightFraction =
+      THORAX_REFERENCE_POLICY.maxPeakSeparationHeightFraction,
+    tieToleranceUnits =
+      THORAX_REFERENCE_POLICY.tieToleranceUnits,
+  } = {},
+) {
+  const detection = detectUnderbustProfileCandidate(
+    samples,
+    rawHeightUnits,
+    {
+      minProminenceHeightFraction,
+      minPeakSeparationHeightFraction,
+      maxPeakSeparationHeightFraction,
+      tieToleranceUnits,
+    },
+  );
+
+  const structural = detection.candidates.filter(
+    (candidate) =>
+      candidate.peak &&
+      Number.isFinite(
+        candidate.peak.directionalSurfaceUnits,
+      ) &&
+      Number.isFinite(
+        candidate.prominenceHeightFraction,
+      ),
+  );
+
+  const ranked = [...structural].sort((a, b) => {
+    const peakDelta =
+      b.peak.directionalSurfaceUnits -
+      a.peak.directionalSurfaceUnits;
+    if (Math.abs(peakDelta) > tieToleranceUnits) {
+      return peakDelta;
+    }
+
+    const prominenceDelta =
+      b.prominenceHeightFraction -
+      a.prominenceHeightFraction;
+    if (Math.abs(prominenceDelta) > Number.EPSILON) {
+      return prominenceDelta;
+    }
+
+    return b.sample.heightFraction -
+      a.sample.heightFraction;
+  });
+
+  return {
+    candidates: detection.candidates,
+    selected: ranked[0] ?? null,
+  };
+}
+
 export function findThoraxReferenceLandmarks({
   positions,
   triangles,
@@ -382,21 +443,26 @@ export function findThoraxReferenceLandmarks({
     };
   }
 
-  const pairDetection = selectThoraxProminencePair(
-    samples,
-    rawHeightUnits,
-    {
-      minProminenceHeightFraction,
-      minPeakSeparationHeightFraction,
-      maxPeakSeparationHeightFraction,
-      tieToleranceUnits,
-    },
-  );
+  const structuralPairDetection =
+    selectThoraxStructuralPair(
+      samples,
+      rawHeightUnits,
+      {
+        minProminenceHeightFraction,
+        minPeakSeparationHeightFraction,
+        maxPeakSeparationHeightFraction,
+        tieToleranceUnits,
+      },
+    );
 
-  const chestSample = selectGreatestAnteriorSample(
-    eligible,
-    tieToleranceUnits,
-  );
+  const structuralPair =
+    structuralPairDetection.selected;
+
+  const chestSample = structuralPair?.peak ??
+    selectGreatestAnteriorSample(
+      eligible,
+      tieToleranceUnits,
+    );
 
   if (!chestSample) {
     return {
@@ -413,24 +479,28 @@ export function findThoraxReferenceLandmarks({
         status: "not-evaluated",
         selected: null,
       },
-      pairCandidates: pairDetection.candidates,
+      pairCandidates:
+        structuralPairDetection.candidates,
       samples,
     };
   }
 
   const pairedUnderbust =
-    selectUnderbustForChestPeak(
-      pairDetection.candidates,
-      chestSample.index,
-    );
+    structuralPair?.qualifies
+      ? structuralPair
+      : null;
 
   return {
     contract: THORAX_REFERENCE_LANDMARKS_CONTRACT,
     status: "selected",
     experimental: true,
-    mode: pairedUnderbust
-      ? "anterior-maximum-paired-underbust"
-      : "anterior-maximum-structural-fallback",
+    mode: structuralPair
+      ? (
+          pairedUnderbust
+            ? "anterior-structural-pair"
+            : "anterior-structural-peak"
+        )
+      : "anterior-maximum-fallback",
     surfaceDirection: direction,
     bodyCenter,
     bodyBounds: bounds,
@@ -471,7 +541,8 @@ export function findThoraxReferenceLandmarks({
           status: "no-stable-landmark",
           selected: null,
         },
-    pairCandidates: pairDetection.candidates,
+    pairCandidates:
+      structuralPairDetection.candidates,
     samples,
   };
 }
