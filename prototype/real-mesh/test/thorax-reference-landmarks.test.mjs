@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   findThoraxReferenceLandmarks,
   selectThoraxProminencePair,
+  selectThoraxStructuralPair,
   THORAX_REFERENCE_LANDMARKS_CONTRACT,
 } from "../thorax-reference-landmarks.mjs";
 
@@ -45,6 +46,29 @@ test("selects the pair whose following peak has greatest anterior projection", (
 
   assert.equal(result.selected.sample.index, 3);
   assert.equal(result.selected.peak.index, 4);
+});
+
+test("structural pair keeps chest peak even when prominence is below underbust threshold", () => {
+  const samples = [
+    measured(0, 0.68, 1.2),
+    measured(1, 0.70, 1.0),
+    measured(2, 0.72, 1.03),
+    measured(3, 0.74, 1.02),
+  ];
+
+  const result = selectThoraxStructuralPair(
+    samples,
+    10,
+    {
+      minProminenceHeightFraction: 0.01,
+      minPeakSeparationHeightFraction: 0.01,
+      maxPeakSeparationHeightFraction: 0.05,
+    },
+  );
+
+  assert.equal(result.selected.sample.index, 1);
+  assert.equal(result.selected.peak.index, 2);
+  assert.equal(result.selected.qualifies, false);
 });
 
 function ring(y, halfWidth, backZ, frontZ) {
@@ -116,7 +140,7 @@ test("full finder selects paired anterior prominence and normalizes direction", 
   assert.equal(result.status, "selected");
   assert.equal(
     result.mode,
-    "anterior-maximum-paired-underbust",
+    "anterior-structural-pair",
   );
   assert.deepEqual(result.surfaceDirection, {x: 0, z: 1});
   assert.ok(
@@ -141,7 +165,7 @@ test("keeps chest on greatest anterior surface when underbust is not stable", ()
   assert.equal(result.status, "selected");
   assert.equal(
     result.mode,
-    "anterior-maximum-structural-fallback",
+    "anterior-maximum-fallback",
   );
   assert.equal(
     result.underbust.status,
