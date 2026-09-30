@@ -351,12 +351,6 @@ function runChestReferenceSweep({
   const pairedThoraxUnderbustTransitions =
     detectUnderbustTransitions(pairedThoraxSamples);
 
-  assert.equal(
-    pairedThoraxChestJumps.length,
-    0,
-    `${shapePrior} shoulder-${targetShoulderBreadthCm}: paired thorax chest reference switched by more than one normal sample step`,
-  );
-
   const jumpNeighborhoods = chestReferenceJumps.map((jump) =>
     buildSweepJumpNeighborhood({
       jump,
@@ -814,6 +808,22 @@ async function main() {
     });
   });
 
+  const pairedThoraxAcceptanceFailures =
+    chestReferenceSweep
+      .filter(
+        (sweep) =>
+          (sweep.pairedThorax?.chestReferenceJumps?.length ?? 0) > 0,
+      )
+      .map((sweep) => ({
+        shapePrior: sweep.shapePrior,
+        targetShoulderBreadthCm:
+          sweep.targetShoulderBreadthCm,
+        jumpCount:
+          sweep.pairedThorax.chestReferenceJumps.length,
+        jumps:
+          sweep.pairedThorax.chestReferenceJumps,
+      }));
+
   verifiedAssets.sort((a, b) =>
     a.path.localeCompare(b.path)
   );
@@ -839,6 +849,15 @@ async function main() {
     results,
     underbustExploration,
     chestReferenceSweep,
+    acceptance: {
+      pairedThoraxChestContinuity: {
+        status:
+          pairedThoraxAcceptanceFailures.length === 0
+            ? "passed"
+            : "failed",
+        failures: pairedThoraxAcceptanceFailures,
+      },
+    },
   };
 
   await mkdir(dirname(outputPath), { recursive: true });
@@ -851,6 +870,13 @@ async function main() {
   process.stdout.write(
     `${JSON.stringify(report, null, 2)}\n`,
   );
+
+  if (pairedThoraxAcceptanceFailures.length > 0) {
+    throw new Error(
+      "paired thorax chest continuity acceptance failed: " +
+        JSON.stringify(pairedThoraxAcceptanceFailures),
+    );
+  }
 }
 
 main().catch((error) => {
