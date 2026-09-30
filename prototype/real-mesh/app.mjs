@@ -1,8 +1,15 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { MAKEHUMAN_ASSET_MANIFEST } from "./asset-manifest.mjs";
-import { planMakeHumanMapping } from "./makehuman-adapter.mjs";
-import { parseMakeHumanObj } from "./makehuman-geometry.mjs";
+import {
+  getMakeHumanMeasurementTargetPair,
+  planMakeHumanMapping,
+} from "./makehuman-adapter.mjs";
+import { applyRendererTargetDebug } from "./makehuman-debug-target.mjs";
+import {
+  parseMakeHumanObj,
+  parseMakeHumanTarget,
+} from "./makehuman-geometry.mjs";
 
 const viewport = document.querySelector("#viewport");
 const diagnostics = document.querySelector("#diagnostics");
@@ -11,6 +18,8 @@ const assetStatus = document.querySelector("#asset-status");
 const heightInput = document.querySelector("#height");
 const heightValue = document.querySelector("#height-value");
 const priorSelect = document.querySelector("#shape-prior");
+const shoulderTargetInput = document.querySelector("#shoulder-target-debug");
+const shoulderTargetValue = document.querySelector("#shoulder-target-value");
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf3f3f3);
@@ -45,7 +54,11 @@ scene.add(grid);
 let sourceCharacter;
 let workingBody;
 let meshRoot;
-let nativeHeight = null;
+let basePositions;
+let currentNativeHeight = null;
+let shoulderTargetPair;
+let shoulderTargetDeltas;
+let shoulderTargetWeight = 0;
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -72,18 +85,26 @@ function neutralGrayMaterial() {
   });
 }
 
-function measureNativeHeight(object) {
-  object.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(object);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-  return size.y;
+function measurePositionArrayHeight(positions) {
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let i = 1; i < positions.length; i += 3) {
+    minY = Math.min(minY, positions[i]);
+    maxY = Math.max(maxY, positions[i]);
+  }
+
+  const height = maxY - minY;
+  if (!Number.isFinite(height) || height <= 0) {
+    throw new TypeError("mesh position array has no positive height");
+  }
+  return height;
 }
 
 function fitMeshToCanonicalHeight(targetHeightM) {
-  if (!meshRoot || !nativeHeight || nativeHeight <= 0) return;
+  if (!meshRoot || !currentNativeHeight || currentNativeHeight <= 0) return;
 
-  meshRoot.scale.setScalar(targetHeightM / nativeHeight);
+  meshRoot.scale.setScalar(targetHeightM / currentNativeHeight);
   meshRoot.position.set(0, 0, 0);
   meshRoot.updateMatrixWorld(true);
 
@@ -110,6 +131,14 @@ function renderDiagnostics() {
       shapePriorSeed: plan.shapePriorSeed,
       authoredCoverage,
       calibrationQueue: plan.calibrationQueue,
+      rendererTargetDebug: {
+        field: "measurements.shoulderBreadthCm",
+        signedWeight: shoulderTargetWeight,
+        calibrated: false,
+        canonicalShoulderBreadthCm:
+          workingBody.measurements?.shoulderBreadthCm ?? null,
+        targetsLoaded: Boolean(shoulderTargetDeltas),
+      },
       limitations: plan.limitations,
     },
     null,
@@ -117,6 +146,57 @@ function renderDiagnostics() {
   );
 
   sourceView.textContent = JSON.stringify(workingBody, null, 2);
+}
+
+async function fetchTargetDeltas(asset) {
+  const response = await fetch(asset.url);
+  if (!response.ok) {
+    throw new Error(`Failed to load target ${asset.path}: HTTP ${response.status}`);
+  }
+  return parseMakeHumanTarget(await response.text());
+}
+
+async function loadShoulderDebugTargets() {
+  shoulderTargetPair =
+    getMakeHumanMeasurementTargetPair("shoulderBreadthCm");
+
+  const [decreaseDeltas, increaseDeltas] = await Promise.all([
+    fetchTargetDeltas(shoulderTargetPair.decrease),
+    fetchTargetDeltas(shoulderTargetPair.increase),
+  ]);
+
+  shoulderTargetDeltas = {decreaseDeltas, increaseDeltas};
+  shoulderTargetInput.disabled = false;
+}
+
+function updateMeshPositions(positions) {
+  if (!meshRoot) return;
+
+  meshRoot.geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+  meshRoot.geometry.computeVertexNormals();
+  meshRoot.geometry.computeBoundingBox();
+  currentNativeHeight = measurePositionArrayHeight(positions);
+}
+
+function applyShoulderTargetDebug() {
+  if (!meshRoot || !basePositions || !shoulderTargetDeltas || !shoulderTargetPair) {
+    return;
+  }
+
+  const result = applyRendererTargetDebug({
+    basePositions,
+    decreaseDeltas: shoulderTargetDeltas.decreaseDeltas,
+    increaseDeltas: shoulderTargetDeltas.increaseDeltas,
+    signedWeight: shoulderTargetWeight,
+    field: "measurements.shoulderBreadthCm",
+    modifier: shoulderTargetPair.modifier,
+  });
+
+  updateMeshPositions(result.positions);
+  renderDiagnostics();
 }
 
 async function loadRealMesh() {
@@ -140,13 +220,16 @@ async function loadRealMesh() {
     meshRoot = new THREE.Mesh(geometry, neutralGrayMaterial());
     meshRoot.name = "Pinned MakeHuman CC0 base mesh";
     meshRoot.castShadow = true;
+    basePositions = new Float64Array(parsed.positions);
     meshRoot.userData.originalVertexCount = parsed.vertexCount;
     meshRoot.userData.originalTriangleCount = parsed.triangleCount;
-    meshRoot.userData.originalPositions = parsed.positions;
+    meshRoot.userData.originalPositions = basePositions;
 
-    nativeHeight = measureNativeHeight(meshRoot);
+    currentNativeHeight = measurePositionArrayHeight(basePositions);
     scene.add(meshRoot);
-    renderDiagnostics();
+
+    await loadShoulderDebugTargets();
+    applyShoulderTargetDebug();
 
     assetStatus.textContent = JSON.stringify(
       {
@@ -158,7 +241,14 @@ async function loadRealMesh() {
         vertexCount: parsed.vertexCount,
         triangleCount: parsed.triangleCount,
         stableSourceVertexIndices: true,
-        nativeObjHeightUnits: nativeHeight,
+        nativeObjHeightUnits: measurePositionArrayHeight(basePositions),
+        shoulderTargetPair: {
+          modifier: shoulderTargetPair.modifier,
+          calibrationStatus: shoulderTargetPair.calibrationStatus,
+          decreaseBlobSha: shoulderTargetPair.decrease.blobSha,
+          increaseBlobSha: shoulderTargetPair.increase.blobSha,
+          loaded: true,
+        },
       },
       null,
       2,
@@ -185,6 +275,13 @@ priorSelect.addEventListener("change", () => {
   renderDiagnostics();
 });
 
+shoulderTargetInput.addEventListener("input", () => {
+  shoulderTargetWeight = Number(shoulderTargetInput.value);
+  shoulderTargetValue.textContent = shoulderTargetWeight.toFixed(2);
+  applyShoulderTargetDebug();
+});
+
+
 document.querySelector("#front-view").addEventListener("click", () => {
   camera.position.set(0, 1.35, 3.4);
   controls.target.set(0, 0.9, 0);
@@ -209,6 +306,9 @@ async function loadCharacter() {
   heightInput.value = workingBody.measurements?.heightCm ?? 170;
   heightValue.textContent = `${heightInput.value} cm`;
   priorSelect.value = workingBody.shapePrior ?? "neutral";
+  shoulderTargetInput.value = "0";
+  shoulderTargetInput.disabled = true;
+  shoulderTargetValue.textContent = "0.00";
 
   renderDiagnostics();
   await loadRealMesh();
