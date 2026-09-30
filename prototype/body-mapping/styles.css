@@ -1,0 +1,202 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: #1b1b1b;
+  background: #f7f7f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #d8d8d8;
+  background: #ffffff;
+}
+
+header h1 {
+  margin: 0.1rem 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+}
+
+header p {
+  max-width: 72ch;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.header-actions,
+.mode-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #bdbdbd;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f0f0f0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(420px, 1fr) minmax(280px, 360px);
+  min-height: calc(100vh - 130px);
+}
+
+.panel {
+  padding: 1.25rem;
+  overflow: auto;
+  background: #fff;
+}
+
+.controls-panel {
+  border-right: 1px solid #d8d8d8;
+}
+
+.diagnostics-panel {
+  border-left: 1px solid #d8d8d8;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1rem;
+}
+
+.control {
+  display: block;
+  margin: 1rem 0;
+}
+
+.control-title {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+}
+
+.control-row output {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-size: 0.82rem;
+}
+
+select {
+  width: 100%;
+  padding: 0.55rem;
+}
+
+.mode-buttons {
+  margin: 1rem 0 1.25rem;
+}
+
+.viewport-wrap {
+  position: relative;
+  min-height: 640px;
+  background: #f3f3f3;
+}
+
+#viewport {
+  position: absolute;
+  inset: 0;
+}
+
+#viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.viewport-hint {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.75rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.35rem;
+  background: rgb(255 255 255 / 78%);
+  font-size: 0.78rem;
+}
+
+.note {
+  margin-top: 1.5rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #555;
+}
+
+pre {
+  overflow: auto;
+  padding: 0.75rem;
+  border-radius: 0.45rem;
+  background: #f3f3f3;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+details {
+  margin-top: 1rem;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-panel,
+  .diagnostics-panel {
+    border: 0;
+    border-bottom: 1px solid #d8d8d8;
+  }
+
+  .viewport-wrap {
+    min-height: 560px;
+  }
+}
