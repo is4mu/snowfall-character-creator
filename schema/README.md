@@ -30,11 +30,19 @@ The first automated schema test harness should:
 3. assert that every file under `examples/` validates;
 4. assert that every file under `fixtures/invalid/` fails validation;
 5. report the exact instance path and schema path for failures;
-6. run in CI on changes to `schema/**`, schema documentation, or validation tooling.
+6. verify each invalid fixture fails for exactly its documented validator keyword and instance path;
+7. run in CI on changes to `schema/**`, tests, dependency declarations, or the schema workflow.
 
-The validator implementation is intentionally not selected in this design change because the repository's implementation language and toolchain have not yet been chosen.
+The current validation harness uses Python only as lightweight repository tooling. It does **not** select Python as the Character Creator implementation language.
 
-When a validator is selected, the positive/negative fixture contract should remain independent of that implementation.
+Run the contract tests locally with:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+The fixture contract remains independent of the validator implementation. A future tooling change must preserve the same public acceptance/rejection behavior.
 
 ## Adding a field
 
