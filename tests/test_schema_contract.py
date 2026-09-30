@@ -103,6 +103,11 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "armSpanCm",
             "sittingHeightCm",
             "shoulderBreadthCm",
+            "shoulderSlopeDeg",
+            "upperArmLengthCm",
+            "forearmLengthCm",
+            "thighLengthCm",
+            "lowerLegLengthCm",
             "chestCircumferenceCm",
             "chestBreadthCm",
             "chestDepthCm",
@@ -199,6 +204,14 @@ class CharacterSchemaContractTests(unittest.TestCase):
             "body-shape-prior-invalid.character.json": {
                 "validator": "enum",
                 "instance_path": ["body", "shapePrior"],
+            },
+            "body-shoulder-slope-out-of-range.character.json": {
+                "validator": "maximum",
+                "instance_path": [
+                    "body",
+                    "measurements",
+                    "shoulderSlopeDeg",
+                ],
             },
             "body-negative-depth.character.json": {
                 "validator": "exclusiveMinimum",
