@@ -11,6 +11,9 @@ import {
 } from "./makehuman-adapter.mjs";
 import { solveShoulderBreadthTarget } from "./makehuman-calibration.mjs";
 import {
+  solveCoupledChestCircumference,
+} from "./makehuman-coupled-calibration.mjs";
+import {
   collectTriangleVertexIndices,
   getObjGroupTriangles,
   parseMakeHumanObj,
@@ -34,6 +37,10 @@ const heightValue = document.querySelector("#height-value");
 const priorSelect = document.querySelector("#shape-prior");
 const shoulderBreadthInput = document.querySelector("#shoulder-breadth");
 const shoulderBreadthValue = document.querySelector("#shoulder-breadth-value");
+const chestCircumferenceInput = document.querySelector("#chest-circumference");
+const chestCircumferenceValue = document.querySelector(
+  "#chest-circumference-value",
+);
 const shoulderCalibrationStatus = document.querySelector(
   "#shoulder-calibration-status",
 );
@@ -78,7 +85,10 @@ let shapePriorEndpoints;
 let shapePriorRender;
 let shoulderTargetPair;
 let shoulderTargetDeltas;
+let chestTargetPair;
+let chestTargetDeltas;
 let shoulderCalibration;
+let coupledChestCalibration;
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -190,6 +200,18 @@ async function loadShoulderTargets() {
   shoulderTargetDeltas = {decreaseDeltas, increaseDeltas};
 }
 
+async function loadChestTargets() {
+  chestTargetPair =
+    getMakeHumanMeasurementTargetPair("chestCircumferenceCm");
+
+  const [decreaseDeltas, increaseDeltas] = await Promise.all([
+    fetchTargetDeltas(chestTargetPair.decrease),
+    fetchTargetDeltas(chestTargetPair.increase),
+  ]);
+
+  chestTargetDeltas = {decreaseDeltas, increaseDeltas};
+}
+
 async function loadShapePriorTargets() {
   const [feminineTargets, masculineTargets] = await Promise.all([
     Promise.all(
@@ -236,6 +258,8 @@ function renderCanonicalBody() {
   const canonicalHeightCm = workingBody.measurements?.heightCm;
   const targetShoulderBreadthCm =
     workingBody.measurements?.shoulderBreadthCm;
+  const targetChestCircumferenceCm =
+    workingBody.measurements?.chestCircumferenceCm;
 
   if (
     !shoulderTargetDeltas ||
@@ -244,11 +268,72 @@ function renderCanonicalBody() {
     !Number.isFinite(targetShoulderBreadthCm)
   ) {
     shoulderCalibration = undefined;
+    coupledChestCalibration = undefined;
     updateMeshPositions(priorPositions);
     shoulderCalibrationStatus.textContent =
-      "Shoulder calibration requires loaded targets plus canonical heightCm and shoulderBreadthCm.";
+      "Calibration requires loaded targets plus canonical heightCm and shoulderBreadthCm.";
     renderDiagnostics();
     return;
+  }
+
+  if (
+    chestTargetDeltas &&
+    chestTargetPair &&
+    Number.isFinite(targetChestCircumferenceCm)
+  ) {
+    coupledChestCalibration = solveCoupledChestCircumference({
+      priorPositions,
+      bustDecreaseDeltas: chestTargetDeltas.decreaseDeltas,
+      bustIncreaseDeltas: chestTargetDeltas.increaseDeltas,
+      shoulderDecreaseDeltas: shoulderTargetDeltas.decreaseDeltas,
+      shoulderIncreaseDeltas: shoulderTargetDeltas.increaseDeltas,
+      canonicalHeightCm,
+      targetShoulderBreadthCm,
+      targetChestCircumferenceCm,
+      bodyTriangles,
+      bodyVertexIndices,
+      sampleCount: 17,
+      chestToleranceCm: 0.01,
+      shoulderToleranceCm: 0.01,
+      weightTolerance: 1e-6,
+      maxIterations: 32,
+    });
+
+    if (
+      coupledChestCalibration.status === "solved" &&
+      coupledChestCalibration.positions
+    ) {
+      shoulderCalibration =
+        coupledChestCalibration.best.evaluation.shoulder;
+      updateMeshPositions(coupledChestCalibration.positions);
+      shoulderCalibrationStatus.textContent = JSON.stringify(
+        {
+          status: coupledChestCalibration.status,
+          experimental: true,
+          targetChestCm: targetChestCircumferenceCm,
+          measuredChestCm: coupledChestCalibration.chestMeasuredCm,
+          chestResidualCm: coupledChestCalibration.chestResidualCm,
+          bustRendererWeight: coupledChestCalibration.bustWeight,
+          targetShoulderCm: targetShoulderBreadthCm,
+          measuredShoulderCm:
+            coupledChestCalibration.shoulderMeasuredCm,
+          shoulderResidualCm:
+            coupledChestCalibration.shoulderResidualCm,
+          shoulderRendererWeight:
+            coupledChestCalibration.shoulderWeight,
+          scanRangeCm:
+            coupledChestCalibration.scan?.measuredRange ?? null,
+          precedence:
+            "shapePrior -> bust candidate -> shoulder re-solve -> chest re-measure -> height fit",
+        },
+        null,
+        2,
+      );
+      renderDiagnostics();
+      return;
+    }
+  } else {
+    coupledChestCalibration = undefined;
   }
 
   shoulderCalibration = solveShoulderBreadthTarget({
@@ -264,17 +349,18 @@ function renderCanonicalBody() {
   updateMeshPositions(shoulderCalibration.positions);
   shoulderCalibrationStatus.textContent = JSON.stringify(
     {
-      status: shoulderCalibration.status,
+      status: coupledChestCalibration
+        ? `chest-${coupledChestCalibration.status}; shoulder-fallback-${shoulderCalibration.status}`
+        : shoulderCalibration.status,
       experimental: true,
-      targetCm: shoulderCalibration.targetCm,
-      measuredCm: shoulderCalibration.measuredCm,
-      residualCm: shoulderCalibration.residualCm,
-      rendererWeight: shoulderCalibration.weight,
-      reachableCm: [
-        shoulderCalibration.minReachableCm,
-        shoulderCalibration.maxReachableCm,
-      ],
-      precedence: "shapePrior -> explicit shoulderBreadthCm -> height fit",
+      targetShoulderCm: shoulderCalibration.targetCm,
+      measuredShoulderCm: shoulderCalibration.measuredCm,
+      shoulderResidualCm: shoulderCalibration.residualCm,
+      shoulderRendererWeight: shoulderCalibration.weight,
+      chestTargetCm: targetChestCircumferenceCm ?? null,
+      chestSolved: false,
+      precedence:
+        "shapePrior -> explicit shoulderBreadthCm -> height fit",
     },
     null,
     2,
@@ -335,6 +421,7 @@ async function loadRealMesh() {
     await Promise.all([
       loadShapePriorTargets(),
       loadShoulderTargets(),
+      loadChestTargets(),
     ]);
     renderCanonicalBody();
 
@@ -363,6 +450,13 @@ async function loadRealMesh() {
           calibrationStatus: shoulderTargetPair.calibrationStatus,
           decreaseBlobSha: shoulderTargetPair.decrease.blobSha,
           increaseBlobSha: shoulderTargetPair.increase.blobSha,
+          loaded: true,
+        },
+        chestTargetPair: {
+          modifier: chestTargetPair.modifier,
+          calibrationStatus: chestTargetPair.calibrationStatus,
+          decreaseBlobSha: chestTargetPair.decrease.blobSha,
+          increaseBlobSha: chestTargetPair.increase.blobSha,
           loaded: true,
         },
       },
@@ -400,6 +494,15 @@ shoulderBreadthInput.addEventListener("input", () => {
   renderCanonicalBody();
 });
 
+chestCircumferenceInput.addEventListener("input", () => {
+  workingBody.measurements ??= {};
+  workingBody.measurements.chestCircumferenceCm =
+    Number(chestCircumferenceInput.value);
+  chestCircumferenceValue.textContent =
+    `${chestCircumferenceInput.value} cm`;
+  renderCanonicalBody();
+});
+
 document.querySelector("#front-view").addEventListener("click", () => {
   camera.position.set(0, 1.35, 3.4);
   controls.target.set(0, 0.9, 0);
@@ -428,6 +531,10 @@ async function loadCharacter() {
     workingBody.measurements?.shoulderBreadthCm ?? 38;
   shoulderBreadthValue.textContent =
     `${shoulderBreadthInput.value} cm`;
+  chestCircumferenceInput.value =
+    workingBody.measurements?.chestCircumferenceCm ?? 88;
+  chestCircumferenceValue.textContent =
+    `${chestCircumferenceInput.value} cm`;
   shoulderCalibrationStatus.textContent =
     "Loading pinned target assets and experimental renderer landmarks…";
 
