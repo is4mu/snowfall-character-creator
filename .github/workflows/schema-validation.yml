@@ -1,0 +1,43 @@
+name: Schema validation
+
+on:
+  pull_request:
+    paths:
+      - "schema/**"
+      - "tests/**"
+      - "requirements-dev.txt"
+      - ".github/workflows/schema-validation.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "schema/**"
+      - "tests/**"
+      - "requirements-dev.txt"
+      - ".github/workflows/schema-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-schema:
+    name: Validate Character Schema contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install validation dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+
+      - name: Run schema contract tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v

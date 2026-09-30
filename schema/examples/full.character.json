@@ -1,0 +1,151 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "example.mina-kisaragi",
+  "identity": {
+    "displayName": "Mina Kisaragi",
+    "givenName": "Mina",
+    "familyName": "Kisaragi",
+    "birthDate": "2001-09-22",
+    "gender": "woman",
+    "species": "human",
+    "preferredLocale": "ja-JP"
+  },
+  "body": {
+    "heightCm": 162,
+    "massKg": 54,
+    "measurements": {
+      "shoulderBreadthCm": 38,
+      "chestCircumferenceCm": 88,
+      "underbustCircumferenceCm": 72,
+      "waistCircumferenceCm": 66,
+      "hipCircumferenceCm": 91,
+      "inseamCm": 74,
+      "footLengthCm": 25
+    },
+    "notes": "Soft facial impression and balanced proportions."
+  },
+  "appearance": {
+    "hair": {
+      "color": {
+        "srgbHex": "#2B211D",
+        "label": "dark brown"
+      },
+      "lengthCm": 42,
+      "style": "straight, shoulder-length"
+    },
+    "eyes": {
+      "irisColor": {
+        "srgbHex": "#4A352A",
+        "label": "brown"
+      }
+    },
+    "skin": {
+      "tone": {
+        "srgbHex": "#D8B39A",
+        "label": "light warm"
+      }
+    },
+    "distinguishingFeatures": [
+      "slightly thick eyebrows",
+      "gentle facial impression"
+    ]
+  },
+  "personality": {
+    "model": "scc-personality-v1",
+    "traits": {
+      "openness": {
+        "intellectualCuriosity": 0.64,
+        "creativeImagination": 0.55,
+        "aestheticSensitivity": 0.73,
+        "unconventionality": 0.43
+      },
+      "selfRegulation": {
+        "orderliness": 0.68,
+        "diligence": 0.72,
+        "deliberation": 0.69
+      },
+      "social": {
+        "sociability": 0.56,
+        "assertiveness": 0.38,
+        "socialConfidence": 0.52,
+        "activityLevel": 0.57,
+        "emotionalExpressiveness": 0.61
+      },
+      "interpersonal": {
+        "empathy": 0.78,
+        "compassion": 0.8,
+        "trust": 0.62,
+        "forgiveness": 0.66,
+        "respectfulness": 0.83
+      },
+      "integrity": {
+        "sincerity": 0.81,
+        "fairness": 0.87
+      },
+      "emotional": {
+        "anxietyProneness": 0.49,
+        "irritability": 0.34,
+        "sadnessProneness": 0.52,
+        "moodVolatility": 0.42,
+        "recoverySpeed": 0.63
+      },
+      "behavioral": {
+        "statusMotivation": 0.35,
+        "rewardSensitivity": 0.58,
+        "sensationSeeking": 0.4,
+        "emotionalUrgency": 0.31
+      },
+      "attachment": {
+        "attachmentAnxiety": 0.44,
+        "attachmentAvoidance": 0.28
+      }
+    },
+    "description": "Warm and considerate, moderately social, careful before acting, and more interested in stable relationships than status or intense stimulation."
+  },
+  "background": {
+    "summary": "A contemporary fictional character used to exercise the draft schema.",
+    "upbringing": "Raised in a stable urban household.",
+    "education": [
+      "general upper-secondary education"
+    ],
+    "occupations": [
+      "office worker"
+    ],
+    "familyNotes": "Maintains ordinary family relationships."
+  },
+  "preferences": {
+    "affinities": [
+      {
+        "subject": "quiet cafes",
+        "value": 0.7
+      },
+      {
+        "subject": "crowded nightlife",
+        "value": -0.45,
+        "note": "Usually prefers calmer social settings."
+      },
+      {
+        "subject": "winter scenery",
+        "value": 0.8
+      }
+    ]
+  },
+  "metadata": {
+    "tags": [
+      "example",
+      "human",
+      "draft-v1"
+    ],
+    "notes": "Representative example only; not intended as a canonical Snowfall character.",
+    "generation": {
+      "generator": "snowfall-character-creator",
+      "version": "0.0.0-design",
+      "seed": "example-seed-0001"
+    }
+  },
+  "extensions": {
+    "org.snowfall.example": {
+      "purpose": "Demonstrate preservation of namespaced consumer data."
+    }
+  }
+}

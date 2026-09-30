@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "example.minimal",
+  "identity": {
+    "displayName": "Example Character"
+  }
+}
