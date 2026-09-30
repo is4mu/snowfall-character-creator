@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   applyBidirectionalTarget,
   applyTarget,
+  collectTriangleVertexIndices,
+  getObjGroupTriangles,
   parseMakeHumanObj,
   parseMakeHumanTarget,
 } from "../makehuman-geometry.mjs";
@@ -33,6 +35,43 @@ test("OBJ parser preserves original vertex indices and triangulates quads", () =
     0, 2, 0,
   ]);
   assert.deepEqual(Array.from(parsed.triangles), [0, 1, 2, 0, 2, 3]);
+});
+
+test("OBJ parser preserves group membership while keeping source indices", () => {
+  const parsed = parseMakeHumanObj(`
+v 0 0 0
+v 1 0 0
+v 1 1 0
+v 0 1 0
+v 9 9 9
+v 10 9 9
+v 9 10 9
+g body
+f 1 2 3 4
+g helper-marker
+f 5 6 7
+`);
+
+  const body = getObjGroupTriangles(parsed, "body");
+  const helper = getObjGroupTriangles(parsed, "helper-marker");
+
+  assert.deepEqual(Array.from(body), [0, 1, 2, 0, 2, 3]);
+  assert.deepEqual(Array.from(helper), [4, 5, 6]);
+  assert.deepEqual(
+    Array.from(collectTriangleVertexIndices(body)),
+    [0, 1, 2, 3],
+  );
+  assert.equal(parsed.triangleCount, 3);
+  assert.equal(parsed.groups.body.triangleCount, 2);
+  assert.equal(parsed.groups["helper-marker"].triangleCount, 1);
+});
+
+test("missing required group is reported explicitly", () => {
+  const parsed = parseMakeHumanObj(quadObj);
+  assert.throws(
+    () => getObjGroupTriangles(parsed, "body"),
+    /OBJ group not found: body/,
+  );
 });
 
 test("OBJ parser supports negative face indices", () => {
