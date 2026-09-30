@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import { mapBodyToRenderModel } from "./adapter.mjs";
+import { DEFAULT_PREVIEW_POSTURE } from "./posture.mjs";
 import { createProceduralBody } from "./renderer.mjs";
 
 const canvasHost = document.querySelector("#viewport");
@@ -53,7 +54,16 @@ scene.add(axes);
 
 let sourceCharacter;
 let workingBody;
+let previewPosture = {...DEFAULT_PREVIEW_POSTURE};
 let bodyObject;
+
+const postureControlsConfig = [
+  ["pelvicTiltDeg", "Pelvic tilt", -20, 20, 1, "deg"],
+  ["trunkFlexionDeg", "Trunk flexion", -15, 35, 1, "deg"],
+  ["shoulderProtractionDeg", "Shoulder protraction", 0, 30, 1, "deg"],
+  ["headForwardCm", "Head forward", 0, 12, 0.5, "cm"],
+  ["headPitchDeg", "Head pitch", -25, 30, 1, "deg"],
+];
 
 const controlsConfig = [
   ["heightCm", "Height", 140, 205, 1],
@@ -109,7 +119,7 @@ function rebuild() {
   }
 
   const mapped = mapBodyToRenderModel(workingBody);
-  bodyObject = createProceduralBody(mapped);
+  bodyObject = createProceduralBody(mapped, previewPosture);
   bodyObject.traverse((child) => {
     if (child.isMesh) child.castShadow = true;
   });
@@ -121,6 +131,7 @@ function rebuild() {
       shapePrior: mapped.shapePrior,
       fallbackFields: mapped.fallbackFields,
       rendererLocalSurface: mapped.rendererLocalSurface,
+      previewPosture,
       unresolvedShapeDimensions: mapped.unresolvedShapeDimensions,
     },
     null,
@@ -195,6 +206,47 @@ function makeCompositionSlider(field, label) {
   return wrap;
 }
 
+function makePostureSlider(field, label, min, max, step, unit) {
+  const wrap = document.createElement("label");
+  wrap.className = "control";
+
+  const title = document.createElement("span");
+  title.className = "control-title";
+  title.textContent = label;
+
+  const row = document.createElement("div");
+  row.className = "control-row";
+
+  const input = document.createElement("input");
+  input.type = "range";
+  input.min = min;
+  input.max = max;
+  input.step = step;
+  input.value = previewPosture[field];
+
+  const value = document.createElement("output");
+  value.textContent = `${input.value} ${unit}`;
+
+  input.addEventListener("input", () => {
+    previewPosture[field] = Number(input.value);
+    value.textContent = `${input.value} ${unit}`;
+    rebuild();
+  });
+
+  row.append(input, value);
+  wrap.append(title, row);
+  return wrap;
+}
+
+function buildPostureControls() {
+  const host = document.querySelector("#posture-controls");
+  host.replaceChildren();
+
+  for (const config of postureControlsConfig) {
+    host.append(makePostureSlider(...config));
+  }
+}
+
 function buildControls() {
   const host = document.querySelector("#measurement-controls");
   host.replaceChildren();
@@ -211,6 +263,12 @@ function buildControls() {
 
 priorSelect.addEventListener("change", () => {
   workingBody.shapePrior = priorSelect.value;
+  rebuild();
+});
+
+document.querySelector("#reset-posture").addEventListener("click", () => {
+  previewPosture = {...DEFAULT_PREVIEW_POSTURE};
+  buildPostureControls();
   rebuild();
 });
 
@@ -253,6 +311,7 @@ async function load() {
   workingBody = deepClone(sourceCharacter.body);
   priorSelect.value = workingBody.shapePrior ?? "neutral";
   buildControls();
+  buildPostureControls();
   rebuild();
 }
 

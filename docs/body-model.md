@@ -271,7 +271,6 @@ Candidates include:
 - glute projection and fullness;
 - torso surface contour beyond the explicit breadth/depth measurements;
 - regional muscle distribution;
-- posture;
 - left/right asymmetry.
 
 These are intentionally **not frozen in Body Model v1 yet**.
@@ -295,7 +294,7 @@ If a future use case requires them, they should be designed as an explicit optio
 
 Clothing, hair, makeup, pose, camera, and visual styling do not belong to the body model.
 
-Body Model v1 describes the durable body beneath those presentation layers.
+Body Model v1 describes the durable body beneath those presentation layers. Posture is also outside the body model: the same morphology can be displayed in multiple postures without changing canonical measurements. See [Posture Boundary](posture-boundary.md).
 
 ## Research-to-implementation boundary
 

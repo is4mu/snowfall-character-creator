@@ -33,6 +33,7 @@ jobs:
       - name: Check JavaScript module syntax
         run: |
           node --check prototype/body-mapping/adapter.mjs
+          node --check prototype/body-mapping/posture.mjs
           node --check prototype/body-mapping/renderer.mjs
           node --check prototype/body-mapping/app.mjs
 

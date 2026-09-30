@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { derivePreviewPostureTransforms } from "./posture.mjs";
+
 function grayMaterial() {
   return new THREE.MeshStandardMaterial({
     color: 0xb8b8b8,
@@ -190,7 +192,15 @@ function addLeg(group, side, dimensions, baseY, material, jointMat) {
   return baseY + footHeight + lowerLength + upperLength;
 }
 
-function addArm(group, side, dimensions, shoulderY, material, jointMat) {
+function addArm(
+  group,
+  side,
+  dimensions,
+  shoulderY,
+  shoulderForwardM,
+  material,
+  jointMat,
+) {
   const arm = dimensions.arms;
   const x = side * dimensions.shoulderBreadthM / 2;
 
@@ -201,7 +211,7 @@ function addArm(group, side, dimensions, shoulderY, material, jointMat) {
     jointMat,
     18,
   );
-  shoulder.position.set(x, shoulderY, 0);
+  shoulder.position.set(x, shoulderY, shoulderForwardM);
   group.add(shoulder);
 
   const upper = makeCylinder(
@@ -210,7 +220,11 @@ function addArm(group, side, dimensions, shoulderY, material, jointMat) {
     arm.upperLengthM,
     material,
   );
-  upper.position.set(x, shoulderY - arm.upperLengthM / 2, 0);
+  upper.position.set(
+    x,
+    shoulderY - arm.upperLengthM / 2,
+    shoulderForwardM,
+  );
   group.add(upper);
 
   const elbowY = shoulderY - arm.upperLengthM;
@@ -221,7 +235,7 @@ function addArm(group, side, dimensions, shoulderY, material, jointMat) {
     jointMat,
     16,
   );
-  elbow.position.set(x, elbowY, 0);
+  elbow.position.set(x, elbowY, shoulderForwardM);
   group.add(elbow);
 
   const forearm = makeCylinder(
@@ -230,7 +244,11 @@ function addArm(group, side, dimensions, shoulderY, material, jointMat) {
     arm.forearmLengthM,
     material,
   );
-  forearm.position.set(x, elbowY - arm.forearmLengthM / 2, 0);
+  forearm.position.set(
+    x,
+    elbowY - arm.forearmLengthM / 2,
+    shoulderForwardM,
+  );
   group.add(forearm);
 
   const hand = makeEllipsoid(
@@ -243,12 +261,12 @@ function addArm(group, side, dimensions, shoulderY, material, jointMat) {
   hand.position.set(
     x,
     elbowY - arm.forearmLengthM - arm.handLengthM * 0.50,
-    0,
+    shoulderForwardM,
   );
   group.add(hand);
 }
 
-export function createProceduralBody(renderModel) {
+export function createProceduralBody(renderModel, previewPosture = {}) {
   const group = new THREE.Group();
   group.name = "SCC procedural body prototype";
 
@@ -256,6 +274,7 @@ export function createProceduralBody(renderModel) {
   const jointMat = jointMaterial();
   const d = renderModel.dimensions;
   const surface = renderModel.rendererLocalSurface;
+  const posture = derivePreviewPostureTransforms(previewPosture, d);
 
   const crotchY = addLeg(group, -1, d, 0, material, jointMat);
   addLeg(group, 1, d, 0, material, jointMat);
@@ -275,19 +294,42 @@ export function createProceduralBody(renderModel) {
     crotchY + d.pelvis.heightM * 0.48,
     pelvisCenterZ,
   );
+  pelvis.rotation.x = posture.pelvisPitchRad;
   group.add(pelvis);
 
   const torsoBaseY = crotchY + d.pelvis.heightM * 0.68;
+  const upperBody = new THREE.Group();
+  upperBody.name = "preview-posture-upper-body";
+  upperBody.position.set(0, torsoBaseY, 0);
+  upperBody.rotation.x = posture.trunkPitchRad;
+  group.add(upperBody);
+
   const torso = new THREE.Mesh(makeTorsoGeometry(d, surface), material);
-  torso.position.set(0, torsoBaseY, 0);
-  group.add(torso);
+  torso.position.set(0, 0, 0);
+  upperBody.add(torso);
 
   const shoulderSlopeRad = THREE.MathUtils.degToRad(d.shoulderSlopeDeg ?? 0);
   const shoulderDrop =
     Math.tan(shoulderSlopeRad) * (d.shoulderBreadthM / 2);
-  const shoulderY = torsoBaseY + d.torso.heightM - shoulderDrop;
-  addArm(group, -1, d, shoulderY, material, jointMat);
-  addArm(group, 1, d, shoulderY, material, jointMat);
+  const shoulderY = d.torso.heightM - shoulderDrop;
+  addArm(
+    upperBody,
+    -1,
+    d,
+    shoulderY,
+    posture.shoulderForwardM,
+    material,
+    jointMat,
+  );
+  addArm(
+    upperBody,
+    1,
+    d,
+    shoulderY,
+    posture.shoulderForwardM,
+    material,
+    jointMat,
+  );
 
   const neck = makeCylinder(
     d.neck.radiusM * 0.92,
@@ -297,10 +339,10 @@ export function createProceduralBody(renderModel) {
   );
   neck.position.set(
     0,
-    torsoBaseY + d.torso.heightM + d.neck.heightM / 2,
-    0,
+    d.torso.heightM + d.neck.heightM / 2,
+    posture.shoulderForwardM * 0.5,
   );
-  group.add(neck);
+  upperBody.add(neck);
 
   const headRadius = d.head.radiusM;
   const head = makeEllipsoid(
@@ -312,10 +354,11 @@ export function createProceduralBody(renderModel) {
   );
   head.position.set(
     0,
-    torsoBaseY + d.torso.heightM + d.neck.heightM + d.head.heightM / 2,
-    0,
+    d.torso.heightM + d.neck.heightM + d.head.heightM / 2,
+    posture.headForwardM,
   );
-  group.add(head);
+  head.rotation.x = posture.headPitchRad;
+  upperBody.add(head);
 
   const box = new THREE.Box3().setFromObject(group);
   const size = new THREE.Vector3();
@@ -326,5 +369,6 @@ export function createProceduralBody(renderModel) {
   }
 
   group.userData.renderModel = renderModel;
+  group.userData.previewPosture = posture;
   return group;
 }

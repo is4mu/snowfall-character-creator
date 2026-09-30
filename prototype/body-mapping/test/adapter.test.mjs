@@ -263,7 +263,14 @@ test("does not pretend underdetermined surface shape is solved", () => {
       "gluteSurfaceDistributionBeyondGrossDepth",
     ),
   );
-  assert.ok(result.unresolvedShapeDimensions.includes("posture"));
+  assert.equal(
+    result.unresolvedShapeDimensions.includes("posture"),
+    false,
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(result, "previewPosture"),
+    false,
+  );
 });
 
 test("rejects non-SCC body models", () => {
