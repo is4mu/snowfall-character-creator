@@ -16,6 +16,7 @@ This directory contains the portable Character Schema contract and fixtures used
 | `examples/minimal.character.json` | valid | contains the required envelope |
 | `examples/full.character.json` | valid | exercises all draft domains |
 | `fixtures/invalid/body-fat-out-of-range.character.json` | invalid | `bodyFatFraction` exceeds `1.0` |
+| `fixtures/invalid/body-negative-depth.character.json` | invalid | torso depth measurement is negative |
 | `fixtures/invalid/body-missing-model.character.json` | invalid | body object omits required model identifier |
 | `fixtures/invalid/body-shape-prior-invalid.character.json` | invalid | unsupported body shape prior |
 | `fixtures/invalid/missing-identity.character.json` | invalid | required `identity` is absent |
