@@ -86,6 +86,52 @@ class CharacterSchemaContractTests(unittest.TestCase):
         )
         self.assertEqual(trait_count, 30)
 
+    def test_body_v1_contract_is_explicit(self) -> None:
+        body_def = self.schema["$defs"]["body"]
+        self.assertEqual(
+            body_def["properties"]["model"]["const"],
+            "scc-body-v1",
+        )
+        self.assertEqual(
+            set(body_def["properties"]["shapePrior"]["enum"]),
+            {"masculine", "feminine", "neutral"},
+        )
+
+        expected_measurements = {
+            "heightCm",
+            "massKg",
+            "armSpanCm",
+            "sittingHeightCm",
+            "shoulderBreadthCm",
+            "chestCircumferenceCm",
+            "underbustCircumferenceCm",
+            "waistCircumferenceCm",
+            "hipCircumferenceCm",
+            "neckCircumferenceCm",
+            "upperArmCircumferenceCm",
+            "forearmCircumferenceCm",
+            "wristCircumferenceCm",
+            "thighCircumferenceCm",
+            "calfCircumferenceCm",
+            "ankleCircumferenceCm",
+            "armLengthCm",
+            "inseamCm",
+            "handLengthCm",
+            "handBreadthCm",
+            "footLengthCm",
+            "footBreadthCm",
+            "headCircumferenceCm",
+        }
+        self.assertEqual(
+            set(body_def["properties"]["measurements"]["properties"]),
+            expected_measurements,
+        )
+
+        self.assertEqual(
+            set(body_def["properties"]["composition"]["properties"]),
+            {"bodyFatFraction", "muscularity"},
+        )
+
     def test_all_examples_are_valid(self) -> None:
         examples = sorted(EXAMPLES_DIR.glob("*.json"))
         self.assertGreater(len(examples), 0, "No valid example fixtures found.")
@@ -132,6 +178,22 @@ class CharacterSchemaContractTests(unittest.TestCase):
     @staticmethod
     def invalid_contracts() -> dict[str, dict[str, object]]:
         return {
+            "body-fat-out-of-range.character.json": {
+                "validator": "maximum",
+                "instance_path": [
+                    "body",
+                    "composition",
+                    "bodyFatFraction",
+                ],
+            },
+            "body-missing-model.character.json": {
+                "validator": "required",
+                "instance_path": ["body"],
+            },
+            "body-shape-prior-invalid.character.json": {
+                "validator": "enum",
+                "instance_path": ["body", "shapePrior"],
+            },
             "missing-identity.character.json": {
                 "validator": "required",
                 "instance_path": [],
