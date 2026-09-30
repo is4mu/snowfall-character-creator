@@ -58,6 +58,11 @@ let bodyObject;
 const controlsConfig = [
   ["heightCm", "Height", 140, 205, 1],
   ["shoulderBreadthCm", "Shoulder breadth", 30, 55, 0.5],
+  ["shoulderSlopeDeg", "Shoulder slope", 0, 35, 1, "deg"],
+  ["upperArmLengthCm", "Upper-arm length", 18, 40, 0.5],
+  ["forearmLengthCm", "Forearm length", 18, 35, 0.5],
+  ["thighLengthCm", "Thigh length", 28, 50, 0.5],
+  ["lowerLegLengthCm", "Lower-leg length", 25, 50, 0.5],
   ["chestCircumferenceCm", "Chest circumference", 65, 125, 1],
   ["chestBreadthCm", "Chest breadth", 20, 45, 0.5],
   ["chestDepthCm", "Chest depth", 14, 35, 0.5],
@@ -122,7 +127,7 @@ function rebuild() {
   sourceView.textContent = JSON.stringify(workingBody, null, 2);
 }
 
-function makeSlider(field, label, min, max, step) {
+function makeSlider(field, label, min, max, step, unit = "cm") {
   const wrap = document.createElement("label");
   wrap.className = "control";
 
@@ -141,12 +146,12 @@ function makeSlider(field, label, min, max, step) {
   input.value = getMeasurement(field);
 
   const value = document.createElement("output");
-  value.textContent = `${input.value} cm`;
+  value.textContent = `${input.value} ${unit}`;
 
   input.addEventListener("input", () => {
     workingBody.measurements ??= {};
     workingBody.measurements[field] = Number(input.value);
-    value.textContent = `${input.value} cm`;
+    value.textContent = `${input.value} ${unit}`;
     rebuild();
   });
 
