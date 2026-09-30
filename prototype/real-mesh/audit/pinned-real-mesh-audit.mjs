@@ -104,6 +104,8 @@ function summarizeCrossSectionCurve(curve) {
       loopCount: sample.loopCount,
       openChainCount: sample.openChainCount,
       branchNodeCount: sample.branchNodeCount,
+      selectedLoopGeometry:
+        sample.selectedLoopGeometry ?? null,
     })),
   };
 }
@@ -369,6 +371,20 @@ async function main() {
       targetPair: {
         modifier: underbustPair.modifier,
         calibrationStatus: underbustPair.calibrationStatus,
+      },
+      coordinateInterpretation: {
+        genericSampler: "axis-semantic-neutral",
+        makeHumanPositiveZ: "anterior",
+        evidence: {
+          upstreamCommit:
+            MAKEHUMAN_ASSET_MANIFEST.upstreamCommit,
+          path:
+            "makehuman/data/povray/makehuman_facegroup_documentation.pov",
+          blobSha:
+            "cb7da1d84de32cef9d6d3d7a3c87bb6787f09835",
+        },
+        note:
+          "Positive-Z is interpreted as anterior only inside this pinned MakeHuman audit; SCC canonical semantics do not depend on renderer axes.",
       },
       auditBand: {
         lowerBodyHeightFraction: auditLowerFraction,

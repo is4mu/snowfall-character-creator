@@ -198,3 +198,98 @@ The reference plane must be derived from renderer-independent surface geometry a
 Only after that reference contract survives a pinned real-mesh audit should the project implement a coupled underbust/chest/shoulder solver.
 
 A generalized multi-constraint solver remains a likely future direction, but this audit alone is not sufficient reason to introduce it before waist/hip interaction evidence exists.
+
+
+## Anterior-profile follow-up
+
+The circumference-only audit did not establish a stable underbust landmark, so the next audit layer records additional axis-neutral geometry for each selected torso loop:
+
+- X/Z bounds;
+- breadth and depth;
+- positive-Z extent from body center;
+- negative-Z extent from body center;
+- centimeter-normalized forms.
+
+The generic sampler deliberately does not assign anatomical meaning to either Z direction.
+
+For the pinned MakeHuman adapter audit only, upstream documentation at the pinned commit states that the default model faces along positive Z:
+
+```text
+path:
+makehuman/data/povray/makehuman_facegroup_documentation.pov
+
+blob:
+cb7da1d84de32cef9d6d3d7a3c87bb6787f09835
+```
+
+Therefore the pinned audit may interpret positive-Z extent as **adapter-local anterior extent** when reviewing the generated JSON.
+
+This coordinate convention is diagnostic renderer knowledge. It is not Character Schema data and must not become part of SCC's portable body semantics.
+
+### Acceptance question
+
+The next pinned audit should determine whether the below-chest anterior profile contains a reproducible geometric cue for the lower boundary of meaningful chest/breast projection.
+
+No reference plane is selected automatically in this stage.
+
+If the cue is not stable across representative priors, the future underbust contract must return `no-stable-landmark` rather than using circumference minima, target influence, or a fixed height fraction as a guess.
+
+
+## Verified anterior-profile audit
+
+Manual pinned-asset workflow:
+
+```text
+run: 36690714724
+branch: audit/underbust-anterior-profile
+audited head: e3b159a3400a746c751f29639e5c53b70f9bda43
+conclusion: success
+```
+
+The audit recorded axis-neutral loop geometry for every previously valid sample. No new topology failures were introduced.
+
+### Baseline cue
+
+For the 162 / 38 / 88 solved baseline, all three current shape priors show a final local minimum in the positive-Z surface profile before the upper-chest prominence rises to a nearby maximum:
+
+| shape prior | last local minimum fraction | following peak fraction | positive-Z rise |
+| --- | ---: | ---: | ---: |
+| feminine | 0.70964 | 0.72786 | 1.52 cm |
+| neutral | 0.70357 | 0.72786 | 0.92 cm |
+| masculine | 0.69143 | 0.72179 | 0.41 cm |
+
+For this pinned MakeHuman adapter only, positive Z is interpreted as anterior according to the pinned upstream coordinate documentation.
+
+This is materially stronger evidence than the circumference minimum from the previous audit. The candidate sits immediately below the upper chest prominence rather than near the waist region.
+
+### Behavior across underbust target weights
+
+The same upper-band local-minimum cue remains detectable for most sampled renderer weights:
+
+| shape prior | -1 | -0.5 | 0 | +0.5 | +1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| feminine | 0.70964 | 0.70964 | 0.70964 | 0.70964 | 0.70964 |
+| neutral | 0.70357 | 0.70357 | 0.70357 | 0.70964 | 0.70964 |
+| masculine | 0.69750 | 0.69750 | 0.69143 | 0.68536 | none |
+
+The positive-Z rise from the candidate to the following prominence also weakens toward the masculine prior and under strong positive underbust deformation.
+
+At masculine weight +1, the sampled upper band has no qualifying local minimum at all.
+
+### Design conclusion
+
+There is enough evidence to prototype an SCC-owned **underbust reference-plane finder**, but not enough evidence to guarantee a landmark for every geometry.
+
+The first contract should therefore:
+
+1. search only below an already selected chest reference plane;
+2. analyze renderer-independent surface-profile geometry;
+3. select the **last sufficiently prominent local anterior-profile minimum before the chest prominence**;
+4. use explicit prominence / spacing thresholds rather than accepting every numerical wiggle;
+5. return `no-stable-landmark` when the cue is absent or too weak;
+6. keep renderer-axis interpretation in the adapter boundary;
+7. remain experimental until another real-mesh audit validates the detector.
+
+The masculine +1 case is a required negative real-mesh example: a future finder must not fabricate success there.
+
+No target-weight solver should be added until this reference-plane contract exists and passes synthetic plus pinned real-mesh tests.
