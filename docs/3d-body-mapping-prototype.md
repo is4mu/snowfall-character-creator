@@ -307,7 +307,7 @@ A new body field should be added only when all are true:
 
 The recommended follow-up is not a production UI.
 
-The breadth/depth, shoulder-slope, limb-segment, surface-boundary, and posture-boundary passes have now been applied. Local chest/abdomen/glute distribution remains renderer-local by design, and current posture is separate preview/runtime state. The next body-model question is whether asymmetry or regional muscle distribution belongs in v1, or whether Body Model v1 is sufficiently complete to freeze for the first real human mesh.
+The breadth/depth, shoulder-slope, limb-segment, surface-boundary, and posture-boundary passes have now been applied. Body Model v1 is now a freeze candidate for the first real human-mesh adapter. Left/right asymmetry and regional muscle distribution remain explicit non-blocking deferrals.
 
 The project should still avoid choosing the long-term 3D/UI stack until those semantic boundaries are clearer.
 
