@@ -5,6 +5,7 @@ import {
   MAKEHUMAN_RENDERER_LANDMARKS,
   assertPinnedShoulderLandmarks,
   measurePositionArrayHeightUnits,
+  measurePositionBoundsUnits,
   measureShoulderBreadthCm,
 } from "../makehuman-measurement.mjs";
 import {
@@ -17,8 +18,9 @@ function syntheticPinnedBase() {
   const vertexCount = Math.max(landmark.leftIndex, landmark.rightIndex) + 1;
   const positions = new Float64Array(vertexCount * 3);
 
-  positions[1] = -8.4488;
-  positions[4] = 8.4967;
+  positions[1] = -8.1676;
+  positions[4] = 8.4913;
+  positions[2 * 3 + 1] = -99;
 
   const leftOffset = landmark.leftIndex * 3;
   const rightOffset = landmark.rightIndex * 3;
@@ -37,6 +39,8 @@ const increase = [
   {index: 1357, dx: -0.249, dy: 0, dz: 0},
   {index: 8049, dx: 0.249, dy: 0, dz: 0},
 ];
+
+const bodyHeightIndices = new Uint32Array([0, 1, 1357, 8049]);
 
 test("pinned shoulder landmarks match the analyzed CC0 base coordinates", () => {
   const base = syntheticPinnedBase();
@@ -57,14 +61,34 @@ test("pinned landmark assertion detects incompatible base geometry", () => {
   );
 });
 
-test("shoulder breadth is normalized by the current raw mesh height", () => {
+test("body-only height ignores helper vertices outside the anthropometric surface", () => {
+  const base = syntheticPinnedBase();
+
+  assert.ok(measurePositionArrayHeightUnits(base) > 100);
+  assert.ok(
+    Math.abs(
+      measurePositionArrayHeightUnits(base, bodyHeightIndices) - 16.6589
+    ) < 1e-9,
+  );
+
+  const bounds = measurePositionBoundsUnits(base, bodyHeightIndices);
+  assert.equal(bounds.vertexCount, 4);
+  assert.ok(Math.abs(bounds.minY - (-8.1676)) < 1e-9);
+  assert.ok(Math.abs(bounds.maxY - 8.4913) < 1e-9);
+});
+
+test("shoulder breadth is normalized by body-only raw mesh height", () => {
   const base = syntheticPinnedBase();
 
   assert.ok(
-    Math.abs(measurePositionArrayHeightUnits(base) - 16.9455) < 1e-9,
-  );
-  assert.ok(
-    Math.abs(measureShoulderBreadthCm(base, 162) - 36.3091086) < 1e-6,
+    Math.abs(
+      measureShoulderBreadthCm(
+        base,
+        162,
+        undefined,
+        bodyHeightIndices,
+      ) - 36.93377113735
+    ) < 1e-9,
   );
 });
 
@@ -78,6 +102,7 @@ test("shoulder solver reaches the representative 38 cm target", () => {
     increaseDeltas: increase,
     canonicalHeightCm: 162,
     targetShoulderBreadthCm: 38,
+    heightVertexIndices: bodyHeightIndices,
     toleranceCm: 0.001,
   });
 
@@ -98,6 +123,7 @@ test("solver reports target range instead of pretending unreachable values fit",
     increaseDeltas: increase,
     canonicalHeightCm: 162,
     targetShoulderBreadthCm: 50,
+    heightVertexIndices: bodyHeightIndices,
   });
 
   assert.equal(tooWide.status, "out-of-range");
@@ -115,8 +141,9 @@ test("solver endpoint range matches pinned shoulder-target analysis", () => {
     increaseDeltas: increase,
     canonicalHeightCm: 162,
     targetShoulderBreadthCm: 38,
+    heightVertexIndices: bodyHeightIndices,
   });
 
-  assert.ok(Math.abs(result.minReachableCm - 33.72789236) < 1e-6);
-  assert.ok(Math.abs(result.maxReachableCm - 41.07001859) < 1e-6);
+  assert.ok(Math.abs(result.minReachableCm - 34.30814759678) < 1e-9);
+  assert.ok(Math.abs(result.maxReachableCm - 41.77658788996) < 1e-9);
 });
