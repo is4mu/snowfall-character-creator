@@ -110,7 +110,7 @@ export const MAKEHUMAN_COMPOSITION_MAPPING = Object.freeze({
   },
 });
 
-const SHAPE_PRIOR_SEED = Object.freeze({
+const SHAPE_PRIOR_VALUE = Object.freeze({
   feminine: 0,
   neutral: 0.5,
   masculine: 1,
@@ -120,16 +120,18 @@ function positiveNumberOrNull(value) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-export function makeHumanShapePriorSeed(shapePrior = "neutral") {
-  if (!(shapePrior in SHAPE_PRIOR_SEED)) {
+export function makeHumanShapePriorPlan(shapePrior = "neutral") {
+  if (!(shapePrior in SHAPE_PRIOR_VALUE)) {
     throw new TypeError(`Unsupported shapePrior: ${shapePrior}`);
   }
 
   return {
-    modifier: "macrodetails/Gender",
-    value: SHAPE_PRIOR_SEED[shapePrior],
+    contract: "scc-makehuman-shape-prior-v0",
+    value: SHAPE_PRIOR_VALUE[shapePrior],
     source: "body.shapePrior",
     rendererLocal: true,
+    endpointPolicy: "equal-three-source-group-blend",
+    precedence: "explicit-measurements-after-prior",
   };
 }
 
@@ -180,7 +182,7 @@ export function planMakeHumanMapping(body) {
     sourceModel: body.model,
     asset: MAKEHUMAN_ASSET_MANIFEST,
     targetHeightM: targetHeightCm / 100,
-    shapePriorSeed: makeHumanShapePriorSeed(body.shapePrior ?? "neutral"),
+    shapePriorPlan: makeHumanShapePriorPlan(body.shapePrior ?? "neutral"),
     composition: {
       bodyFatFraction: {
         value: Number.isFinite(body.composition?.bodyFatFraction)
@@ -199,6 +201,7 @@ export function planMakeHumanMapping(body) {
     calibrationQueue,
     prototypeCalibrations,
     limitations: [
+      "Shape prior is renderer-local initialization; explicit canonical measurements are applied after it and take precedence.",
       "Canonical height is directly applied; shoulder breadth has only prototype-level calibration.",
       "Measurement modifier names are renderer-local calibration candidates, not canonical SCC fields.",
       "No MakeHuman application code is reused.",

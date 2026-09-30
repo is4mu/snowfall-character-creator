@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { MAKEHUMAN_ASSET_MANIFEST } from "./asset-manifest.mjs";
+
+import {
+  MAKEHUMAN_ASSET_MANIFEST,
+  MAKEHUMAN_SHAPE_PRIOR_TARGETS,
+} from "./asset-manifest.mjs";
 import {
   getMakeHumanMeasurementTargetPair,
   planMakeHumanMapping,
@@ -14,6 +18,10 @@ import {
   assertPinnedShoulderLandmarks,
   measurePositionArrayHeightUnits,
 } from "./makehuman-measurement.mjs";
+import {
+  applyShapePrior,
+  composeShapePriorEndpoints,
+} from "./makehuman-shape-prior.mjs";
 
 const viewport = document.querySelector("#viewport");
 const diagnostics = document.querySelector("#diagnostics");
@@ -58,11 +66,12 @@ scene.add(fill);
 const grid = new THREE.GridHelper(4, 20, 0xbbbbbb, 0xdddddd);
 scene.add(grid);
 
-let sourceCharacter;
 let workingBody;
 let meshRoot;
 let basePositions;
 let currentNativeHeight = null;
+let shapePriorEndpoints;
+let shapePriorRender;
 let shoulderTargetPair;
 let shoulderTargetDeltas;
 let shoulderCalibration;
@@ -119,7 +128,17 @@ function renderDiagnostics() {
     {
       adapterContract: plan.adapterContract,
       targetHeightM: plan.targetHeightM,
-      shapePriorSeed: plan.shapePriorSeed,
+      shapePriorPlan: plan.shapePriorPlan,
+      shapePriorRender: shapePriorRender
+        ? {
+            contract: shapePriorRender.contract,
+            rendererLocal: shapePriorRender.rendererLocal,
+            source: shapePriorRender.source,
+            shapePrior: shapePriorRender.shapePrior,
+            normalizedValue: shapePriorRender.normalizedValue,
+            endpointPolicy: shapePriorRender.endpointPolicy,
+          }
+        : {status: "not-ready"},
       authoredCoverage,
       calibrationQueue: plan.calibrationQueue,
       prototypeCalibrations: plan.prototypeCalibrations,
@@ -152,12 +171,14 @@ function renderDiagnostics() {
 async function fetchTargetDeltas(asset) {
   const response = await fetch(asset.url);
   if (!response.ok) {
-    throw new Error(`Failed to load target ${asset.path}: HTTP ${response.status}`);
+    throw new Error(
+      `Failed to load target ${asset.path}: HTTP ${response.status}`,
+    );
   }
   return parseMakeHumanTarget(await response.text());
 }
 
-async function loadShoulderDebugTargets() {
+async function loadShoulderTargets() {
   shoulderTargetPair =
     getMakeHumanMeasurementTargetPair("shoulderBreadthCm");
 
@@ -167,6 +188,22 @@ async function loadShoulderDebugTargets() {
   ]);
 
   shoulderTargetDeltas = {decreaseDeltas, increaseDeltas};
+}
+
+async function loadShapePriorTargets() {
+  const [feminineTargets, masculineTargets] = await Promise.all([
+    Promise.all(
+      MAKEHUMAN_SHAPE_PRIOR_TARGETS.feminine.map(fetchTargetDeltas),
+    ),
+    Promise.all(
+      MAKEHUMAN_SHAPE_PRIOR_TARGETS.masculine.map(fetchTargetDeltas),
+    ),
+  ]);
+
+  shapePriorEndpoints = composeShapePriorEndpoints({
+    feminineTargets,
+    masculineTargets,
+  });
 }
 
 function updateMeshPositions(positions) {
@@ -181,30 +218,39 @@ function updateMeshPositions(positions) {
   currentNativeHeight = measurePositionArrayHeightUnits(positions);
 }
 
-function calibrateShoulderFromCanonical() {
-  if (!meshRoot || !basePositions || !shoulderTargetDeltas || !shoulderTargetPair) {
+function renderCanonicalBody() {
+  if (!meshRoot || !basePositions || !shapePriorEndpoints) {
     renderDiagnostics();
     return;
   }
 
+  shapePriorRender = applyShapePrior({
+    basePositions,
+    endpoints: shapePriorEndpoints,
+    shapePrior: workingBody.shapePrior ?? "neutral",
+  });
+
+  const priorPositions = shapePriorRender.positions;
   const canonicalHeightCm = workingBody.measurements?.heightCm;
   const targetShoulderBreadthCm =
     workingBody.measurements?.shoulderBreadthCm;
 
   if (
+    !shoulderTargetDeltas ||
+    !shoulderTargetPair ||
     !Number.isFinite(canonicalHeightCm) ||
     !Number.isFinite(targetShoulderBreadthCm)
   ) {
     shoulderCalibration = undefined;
-    updateMeshPositions(basePositions);
+    updateMeshPositions(priorPositions);
     shoulderCalibrationStatus.textContent =
-      "Shoulder calibration requires canonical heightCm and shoulderBreadthCm.";
+      "Shoulder calibration requires loaded targets plus canonical heightCm and shoulderBreadthCm.";
     renderDiagnostics();
     return;
   }
 
   shoulderCalibration = solveShoulderBreadthTarget({
-    basePositions,
+    basePositions: priorPositions,
     decreaseDeltas: shoulderTargetDeltas.decreaseDeltas,
     increaseDeltas: shoulderTargetDeltas.increaseDeltas,
     canonicalHeightCm,
@@ -225,6 +271,7 @@ function calibrateShoulderFromCanonical() {
         shoulderCalibration.minReachableCm,
         shoulderCalibration.maxReachableCm,
       ],
+      precedence: "shapePrior -> explicit shoulderBreadthCm -> height fit",
     },
     null,
     2,
@@ -239,8 +286,7 @@ async function loadRealMesh() {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    const source = await response.text();
-    const parsed = parseMakeHumanObj(source);
+    const parsed = parseMakeHumanObj(await response.text());
 
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
@@ -262,8 +308,11 @@ async function loadRealMesh() {
     assertPinnedShoulderLandmarks(basePositions);
     scene.add(meshRoot);
 
-    await loadShoulderDebugTargets();
-    calibrateShoulderFromCanonical();
+    await Promise.all([
+      loadShapePriorTargets(),
+      loadShoulderTargets(),
+    ]);
+    renderCanonicalBody();
 
     assetStatus.textContent = JSON.stringify(
       {
@@ -276,6 +325,12 @@ async function loadRealMesh() {
         triangleCount: parsed.triangleCount,
         stableSourceVertexIndices: true,
         nativeObjHeightUnits: measurePositionArrayHeightUnits(basePositions),
+        shapePriorAssets: {
+          contract: MAKEHUMAN_SHAPE_PRIOR_TARGETS.contract,
+          endpointAssetCount: 3,
+          sourceNeutralized: true,
+          loaded: true,
+        },
         shoulderTargetPair: {
           modifier: shoulderTargetPair.modifier,
           calibrationStatus: shoulderTargetPair.calibrationStatus,
@@ -289,7 +344,7 @@ async function loadRealMesh() {
     );
   } catch (error) {
     assetStatus.textContent = [
-      "Failed to load or parse pinned base mesh.",
+      "Failed to load or parse pinned real-mesh assets.",
       String(error?.message ?? error),
       "",
       MAKEHUMAN_ASSET_MANIFEST.baseMeshUrl,
@@ -301,12 +356,12 @@ heightInput.addEventListener("input", () => {
   workingBody.measurements ??= {};
   workingBody.measurements.heightCm = Number(heightInput.value);
   heightValue.textContent = `${heightInput.value} cm`;
-  calibrateShoulderFromCanonical();
+  renderCanonicalBody();
 });
 
 priorSelect.addEventListener("change", () => {
   workingBody.shapePrior = priorSelect.value;
-  renderDiagnostics();
+  renderCanonicalBody();
 });
 
 shoulderBreadthInput.addEventListener("input", () => {
@@ -315,7 +370,7 @@ shoulderBreadthInput.addEventListener("input", () => {
     Number(shoulderBreadthInput.value);
   shoulderBreadthValue.textContent =
     `${shoulderBreadthInput.value} cm`;
-  calibrateShoulderFromCanonical();
+  renderCanonicalBody();
 });
 
 document.querySelector("#front-view").addEventListener("click", () => {
@@ -336,7 +391,7 @@ async function loadCharacter() {
     throw new Error(`Failed to load SCC example: ${response.status}`);
   }
 
-  sourceCharacter = await response.json();
+  const sourceCharacter = await response.json();
   workingBody = deepClone(sourceCharacter.body);
 
   heightInput.value = workingBody.measurements?.heightCm ?? 170;

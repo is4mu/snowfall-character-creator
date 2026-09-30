@@ -30,3 +30,49 @@ export const MAKEHUMAN_MEASUREMENT_TARGETS = Object.freeze({
     }),
   }),
 });
+
+export const MAKEHUMAN_SHAPE_PRIOR_TARGETS = Object.freeze({
+  contract: "scc-makehuman-shape-prior-assets-v0",
+  sourceNeutralization:
+    "Each endpoint is an equal blend of three pinned upstream young-adult macro source groups. Individual source-group identity is not part of SCC character or renderer state.",
+  feminine: Object.freeze([
+    Object.freeze({
+      path: "makehuman/data/targets/macrodetails/african-female-young.target",
+      blobSha: "a7d2b130667cc81ecd1ca0598da9be27bec1864a",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/african-female-young.target",
+    }),
+    Object.freeze({
+      path: "makehuman/data/targets/macrodetails/asian-female-young.target",
+      blobSha: "f862c96add11c31ab1ca75c69e1c67ae5e0e3d5f",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/asian-female-young.target",
+    }),
+    Object.freeze({
+      path: "makehuman/data/targets/macrodetails/caucasian-female-young.target",
+      blobSha: "9d1f0cbeedc9a6a51abe33f1ebb5fa7c5a7edbf1",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/caucasian-female-young.target",
+    }),
+  ]),
+  masculine: Object.freeze([
+    Object.freeze({
+      path: "makehuman/data/targets/macrodetails/african-male-young.target",
+      blobSha: "dd5743e48700267d76596f575bf17b4b5cc3b3e0",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/african-male-young.target",
+    }),
+    Object.freeze({
+      path: "makehuman/data/targets/macrodetails/asian-male-young.target",
+      blobSha: "8cd3ef3e9ddb06ee2d166f75f9ac10871251f938",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/asian-male-young.target",
+    }),
+    Object.freeze({
+      path: "makehuman/data/targets/macrodetails/caucasian-male-young.target",
+      blobSha: "c3b82f92c5ced85599199cd184b0faf3b3fc6881",
+      url:
+        "https://raw.githubusercontent.com/makehumancommunity/makehuman/a8bc2d54ff0ac92e78ff71431b1023eda42bf482/makehuman/data/targets/macrodetails/caucasian-male-young.target",
+    }),
+  ]),
+});
