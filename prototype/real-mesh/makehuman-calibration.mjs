@@ -10,6 +10,7 @@ function evaluate({
   increaseDeltas,
   weight,
   canonicalHeightCm,
+  heightVertexIndices,
 }) {
   const positions = applyBidirectionalTarget(
     basePositions,
@@ -24,6 +25,8 @@ function evaluate({
     measuredCm: measureShoulderBreadthCm(
       positions,
       canonicalHeightCm,
+      undefined,
+      heightVertexIndices,
     ),
   };
 }
@@ -34,6 +37,7 @@ export function solveShoulderBreadthTarget({
   increaseDeltas,
   canonicalHeightCm,
   targetShoulderBreadthCm,
+  heightVertexIndices = null,
   toleranceCm = 0.01,
   maxIterations = 48,
 }) {
@@ -58,6 +62,7 @@ export function solveShoulderBreadthTarget({
     increaseDeltas,
     weight: -1,
     canonicalHeightCm,
+    heightVertexIndices,
   });
   let high = evaluate({
     basePositions,
@@ -65,6 +70,7 @@ export function solveShoulderBreadthTarget({
     increaseDeltas,
     weight: 1,
     canonicalHeightCm,
+    heightVertexIndices,
   });
 
   const increasing = high.measuredCm >= low.measuredCm;
