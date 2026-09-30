@@ -167,8 +167,20 @@ function createReferencePlaneMarker({
     (currentBodyBounds.minZ + currentBodyBounds.maxZ) / 2,
   );
 
-  const width = Math.max(currentBodyBounds.width * 1.08, 0.01);
-  const depth = Math.max(currentBodyBounds.depth * 1.08, 0.01);
+  const width = Math.max(
+    Math.min(
+      currentBodyBounds.width * 1.08,
+      currentBodyBounds.height * 0.4,
+    ),
+    0.01,
+  );
+  const depth = Math.max(
+    Math.min(
+      currentBodyBounds.depth * 1.08,
+      currentBodyBounds.height * 0.25,
+    ),
+    0.01,
+  );
   const geometry = new THREE.PlaneGeometry(width, depth);
   const surface = new THREE.Mesh(
     geometry,
