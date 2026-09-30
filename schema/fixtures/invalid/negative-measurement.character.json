@@ -5,6 +5,7 @@
     "displayName": "Invalid Measurement"
   },
   "body": {
+    "model": "scc-body-v1",
     "measurements": {
       "footLengthCm": -25
     }
