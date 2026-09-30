@@ -48,6 +48,9 @@ test("asset manifest is pinned to a CC0 graphical asset source", () => {
     MAKEHUMAN_ASSET_MANIFEST.upstreamCodeLicense,
     "AGPL-3.0-or-later",
   );
+  assert.equal(MAKEHUMAN_ASSET_MANIFEST.anthropometryGroup, "body");
+  assert.equal(MAKEHUMAN_ASSET_MANIFEST.expectedBodyVertexCount, 13380);
+  assert.equal(MAKEHUMAN_ASSET_MANIFEST.expectedBodyTriangleCount, 26756);
 });
 
 test("shape prior bundle pins three assets per endpoint to the same commit", () => {
