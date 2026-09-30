@@ -24,6 +24,10 @@ function parseObjVertexIndex(token, vertexCount, lineNumber) {
   return zeroBased;
 }
 
+function pushTriangle(target, a, b, c) {
+  target.push(a, b, c);
+}
+
 export function parseMakeHumanObj(text) {
   if (typeof text !== "string") {
     throw new TypeError("OBJ source must be a string");
@@ -31,7 +35,16 @@ export function parseMakeHumanObj(text) {
 
   const positions = [];
   const triangles = [];
+  const groupTriangles = new Map();
+  let currentGroup = "default";
   const lines = text.split(/\r?\n/);
+
+  function currentGroupTarget() {
+    if (!groupTriangles.has(currentGroup)) {
+      groupTriangles.set(currentGroup, []);
+    }
+    return groupTriangles.get(currentGroup);
+  }
 
   for (let i = 0; i < lines.length; i += 1) {
     const lineNumber = i + 1;
@@ -51,6 +64,13 @@ export function parseMakeHumanObj(text) {
       continue;
     }
 
+    if (line.startsWith("g ")) {
+      const name = line.slice(2).trim();
+      currentGroup = name || "default";
+      currentGroupTarget();
+      continue;
+    }
+
     if (line.startsWith("f ")) {
       const refs = line.split(/\s+/).slice(1);
       if (refs.length < 3) {
@@ -61,9 +81,11 @@ export function parseMakeHumanObj(text) {
       const face = refs.map((token) =>
         parseObjVertexIndex(token, vertexCount, lineNumber),
       );
+      const groupTarget = currentGroupTarget();
 
       for (let j = 1; j < face.length - 1; j += 1) {
-        triangles.push(face[0], face[j], face[j + 1]);
+        pushTriangle(triangles, face[0], face[j], face[j + 1]);
+        pushTriangle(groupTarget, face[0], face[j], face[j + 1]);
       }
     }
   }
@@ -75,12 +97,53 @@ export function parseMakeHumanObj(text) {
     throw new TypeError("OBJ contains no faces");
   }
 
+  const groups = {};
+  for (const [name, values] of groupTriangles) {
+    if (values.length === 0) continue;
+    groups[name] = Object.freeze({
+      triangleCount: values.length / 3,
+      triangles: new Uint32Array(values),
+    });
+  }
+
   return {
     vertexCount: positions.length / 3,
     triangleCount: triangles.length / 3,
     positions: new Float64Array(positions),
     triangles: new Uint32Array(triangles),
+    groups: Object.freeze(groups),
   };
+}
+
+export function getObjGroupTriangles(parsed, groupName) {
+  if (!parsed?.groups || typeof groupName !== "string" || !groupName) {
+    throw new TypeError("parsed OBJ groups and a non-empty groupName are required");
+  }
+
+  const group = parsed.groups[groupName];
+  if (!group) {
+    throw new RangeError(`OBJ group not found: ${groupName}`);
+  }
+  return group.triangles;
+}
+
+export function collectTriangleVertexIndices(triangles) {
+  if (!(triangles instanceof Uint32Array) && !Array.isArray(triangles)) {
+    throw new TypeError("triangles must be a Uint32Array or array");
+  }
+  if (triangles.length % 3 !== 0) {
+    throw new TypeError("triangles length must be divisible by 3");
+  }
+
+  const indices = new Set();
+  for (const index of triangles) {
+    if (!Number.isInteger(index) || index < 0) {
+      throw new TypeError(`invalid triangle vertex index: ${index}`);
+    }
+    indices.add(index);
+  }
+
+  return new Uint32Array([...indices].sort((a, b) => a - b));
 }
 
 export function parseMakeHumanTarget(text) {
