@@ -60,14 +60,17 @@ test("single sign-change bracket refines to the requested target", () => {
 
 test("multiple target crossings are reported as ambiguous", () => {
   const result = solveRendererTargetByBrackets({
-    evaluateWeight: measured((weight) => 88 + (weight * weight - 0.25) * 10),
+    evaluateWeight: measured((weight) =>
+      88 + (weight + 0.4) * (weight - 0.35) * 10
+    ),
     targetValue: 88,
     sampleCount: 17,
     tolerance: 0.0001,
   });
 
   assert.equal(result.status, "ambiguous-multiple-brackets");
-  assert.ok(result.scan.brackets.length >= 2);
+  assert.equal(result.scan.exactHits.length, 0);
+  assert.equal(result.scan.brackets.length, 2);
 });
 
 test("unreachable target reports measured range", () => {
