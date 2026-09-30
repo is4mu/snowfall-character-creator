@@ -271,3 +271,100 @@ The second mode means that SCC still has a chest reference, but the geometry doe
 Importantly, switching between these diagnostic modes no longer changes the **rule used to select chest**.
 
 This refined version must be rerun against the same pinned sweep before it can replace the legacy finder.
+
+
+## Second pinned acceptance failure and structural-peak refinement
+
+The second pinned run targeted:
+
+```text
+head: a49f457c331250cbf784e5704c5efebd2a3c91af
+run: 36727047474
+```
+
+The workflow failed intentionally on the new continuity gate:
+
+```text
+feminine shoulder-39:
+paired thorax chest reference switched by more than one normal sample step
+```
+
+This showed that simply selecting the **global anterior maximum sample** is still insufficient. A smooth deformation can change which separated anterior maximum wins, producing a discrete chest-level switch even though underbust stability is no longer involved.
+
+### Refined chest rule
+
+The current prototype now distinguishes:
+
+1. **structural thorax peak selection**;
+2. **underbust confidence**.
+
+The anterior profile is first analyzed for local minimum -> following peak structures.
+
+For chest selection:
+
+- a structural minimum/peak candidate may be used even when its prominence is below the underbust confidence threshold;
+- the candidate with the greatest anterior peak is selected;
+- the prominence threshold does **not** decide whether chest exists.
+
+For underbust selection:
+
+- the same structural pair must also satisfy the explicit prominence threshold;
+- otherwise underbust remains `no-stable-landmark`.
+
+Only when no structural minimum/peak candidate exists at all does chest fall back to the greatest anterior surface sample.
+
+Conceptually:
+
+```text
+anterior thorax profile
+        |
+        +--> structural minimum -> peak exists
+        |       |
+        |       +--> chest = structural peak
+        |       |
+        |       +--> prominence sufficient
+        |               |
+        |               +--> underbust = paired minimum
+        |               |
+        |               +--> otherwise no-stable-landmark
+        |
+        +--> no structural pair
+                |
+                +--> chest = anterior-maximum fallback
+                +--> underbust = no-stable-landmark
+```
+
+This prevents a prominence-confidence threshold from changing the chest semantic level.
+
+### Diagnostic modes
+
+The refined modes are:
+
+```text
+anterior-structural-pair
+anterior-structural-peak
+anterior-maximum-fallback
+```
+
+They mean:
+
+- `anterior-structural-pair`: chest structural peak selected and underbust cue is sufficiently prominent;
+- `anterior-structural-peak`: chest structural peak selected but underbust cue is too weak to claim a stable underbust landmark;
+- `anterior-maximum-fallback`: no structural minimum/peak pair exists, so chest uses the greatest anterior surface sample and underbust is unsupported.
+
+## Audit failure artifact policy
+
+Pinned acceptance failures now write the complete JSON report before returning a non-zero exit code.
+
+The workflow uploads the report with `if: always()`.
+
+Therefore a future continuity failure preserves:
+
+- the exact failing sweep;
+- the jump weights;
+- measured chest values;
+- reference fractions;
+- paired modes;
+- underbust states.
+
+This avoids losing the evidence needed to refine the algorithm.
