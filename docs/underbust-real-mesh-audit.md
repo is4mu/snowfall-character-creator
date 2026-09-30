@@ -107,3 +107,94 @@ Use the existing **Pinned real mesh audit** workflow.
 Its JSON artifact now includes an `underbustExploration` section with the exploratory results.
 
 Normal pull-request CI remains hermetic and does not download MakeHuman assets.
+
+
+## First verified real-mesh run
+
+Manual pinned-asset workflow:
+
+```text
+run: 36689517129
+branch: audit/underbust-semantics
+conclusion: success
+```
+
+Both underbust target files matched their pinned Git blob SHA before use.
+
+### Baseline cross-section curve
+
+After solving the authored 162 / 38 / 88 baseline, every one of the 29 diagnostic below-chest slices was measurable for all three current shape priors. No open-chain, non-manifold, or no-loop sample occurred.
+
+The only local circumference minimum inside the sampled band was:
+
+| shape prior | local minimum body-height fraction | circumference |
+| --- | ---: | ---: |
+| feminine | 0.64893 | 66.57 cm |
+| neutral | 0.63679 | 67.94 cm |
+| masculine | 0.62464 | 69.99 cm |
+
+This minimum shifts materially with the shape prior and is well below the selected chest plane at 0.75.
+
+The audit therefore does **not** identify a distinct, stable underbust landmark from the circumference curve alone. In particular, SCC must not relabel this generic torso minimum as underbust without independent semantic evidence.
+
+### Coupling with existing authored chest
+
+Applying the pinned underbust target after the baseline coupled shoulder/chest solve produced the following chest deltas:
+
+| shape prior | weight -1 | weight -0.5 | weight +0.5 | weight +1 |
+| --- | ---: | ---: | ---: | ---: |
+| feminine | -2.00 cm | -1.01 cm | +5.24 cm | +11.09 cm |
+| neutral | -1.74 cm | -0.88 cm | +2.79 cm | +7.66 cm |
+| masculine | -1.53 cm | -0.77 cm | +2.52 cm | +5.21 cm |
+
+The underbust target did not materially move the shoulder measurement in this audit; the shoulder residual remained the baseline coupled-solve residual for every sampled underbust weight.
+
+However, chest is strongly affected. Positive underbust weights also moved the selected chest reference fraction from 0.75 to 0.73 for:
+
+- feminine at +0.5 and +1.0;
+- neutral at +1.0.
+
+The masculine case retained 0.75 across the sampled weights.
+
+### Coupling decision
+
+A future underbust calibration cannot be an independent serial step after chest calibration.
+
+Even though the pinned underbust target did not materially move the current shoulder landmark directly, it changes canonical chest circumference substantially. Re-solving chest can in turn change shoulder breadth through the existing bust target.
+
+The minimum safe future evaluation order is therefore conceptually:
+
+```text
+immutable shape-prior geometry
+        |
+        v
+underbust renderer candidate
+        |
+        v
+re-solve canonical chest
+        |
+        v
+nested re-solve canonical shoulder
+        |
+        v
+re-evaluate underbust reference/measurement
+```
+
+This is a coupling requirement, not yet an implementation commitment.
+
+## Next design step
+
+Do **not** implement an underbust target-weight solver yet.
+
+First define an SCC-owned underbust reference-plane contract that can explicitly return:
+
+- `selected`;
+- `no-stable-landmark`;
+- `no-valid-slice`;
+- topology/measurement diagnostics.
+
+The reference plane must be derived from renderer-independent surface geometry and SCC semantics, not from MakeHuman target influence or AGPL measurement-index tables.
+
+Only after that reference contract survives a pinned real-mesh audit should the project implement a coupled underbust/chest/shoulder solver.
+
+A generalized multi-constraint solver remains a likely future direction, but this audit alone is not sufficient reason to introduce it before waist/hip interaction evidence exists.
