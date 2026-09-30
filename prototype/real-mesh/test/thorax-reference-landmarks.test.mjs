@@ -114,7 +114,10 @@ test("full finder selects paired anterior prominence and normalizes direction", 
     THORAX_REFERENCE_LANDMARKS_CONTRACT,
   );
   assert.equal(result.status, "selected");
-  assert.equal(result.mode, "anterior-prominence-pair");
+  assert.equal(
+    result.mode,
+    "anterior-maximum-paired-underbust",
+  );
   assert.deepEqual(result.surfaceDirection, {x: 0, z: 1});
   assert.ok(
     result.underbust.selected.heightFraction <
@@ -122,7 +125,7 @@ test("full finder selects paired anterior prominence and normalizes direction", 
   );
 });
 
-test("uses explicit fullest-thorax fallback when no prominence pair exists", () => {
+test("keeps chest on greatest anterior surface when underbust is not stable", () => {
   const result = findThoraxReferenceLandmarks({
     ...profiledTorsoMesh({monotonic: true}),
     surfaceDirection: {x: 0, z: 1},
@@ -136,11 +139,15 @@ test("uses explicit fullest-thorax fallback when no prominence pair exists", () 
   });
 
   assert.equal(result.status, "selected");
-  assert.equal(result.mode, "fullest-thorax-fallback");
+  assert.equal(
+    result.mode,
+    "anterior-maximum-structural-fallback",
+  );
   assert.equal(
     result.underbust.status,
     "no-stable-landmark",
   );
+  assert.equal(result.chest.heightFraction, 1);
 });
 
 test("returns no-valid-slice when no cross-section exists", () => {
