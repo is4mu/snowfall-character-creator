@@ -329,3 +329,88 @@ error / solver
 ```
 
 Until that loop exists, target weights are renderer implementation detail and must not be serialized.
+
+
+## Stage 3: first live measurement target
+
+The prototype now applies one real pinned MakeHuman measurement target pair to the human mesh:
+
+```text
+SCC field intent:
+  measurements.shoulderBreadthCm
+
+MakeHuman renderer-local modifier:
+  measure/measure-shoulder-dist-decr|incr
+
+Pinned target assets:
+  measure-shoulder-dist-decr.target
+  blob eb25c3214db91206340ba5e28fcd7f29fadae4a9
+
+  measure-shoulder-dist-incr.target
+  blob 0d6ba8d828c7d9ee42ef18a814d413712214ac21
+```
+
+Both target URLs are pinned to the same upstream commit as the base mesh.
+
+### Debug weight is not a measurement
+
+The browser exposes a signed renderer debug value:
+
+```text
+-1.0 ........ 0 ........ +1.0
+decrease      base       increase
+```
+
+This is deliberately labeled **uncalibrated**.
+
+A value such as `0.5` does not mean 0.5 cm, 50%, or any stable SCC body property.
+
+Its only current meaning is:
+
+> Apply 50% of the selected MakeHuman target delta to the pinned base mesh.
+
+### Immutable-base rule
+
+Every debug update is recomputed from the original parsed base positions.
+
+Target updates are never accumulated on top of the previously deformed mesh.
+
+This guarantees deterministic behavior and prevents slider history from changing the result.
+
+### Height remains canonical
+
+A MakeHuman target may include Y-axis deltas.
+
+After target application, the prototype remeasures the deformed mesh's raw height and then refits it to SCC `heightCm`.
+
+This keeps the renderer-local shoulder experiment independent from canonical stature.
+
+### Schema boundary
+
+The debug target weight is not written into `body`.
+
+A dedicated invalid fixture verifies that a field such as `body.makeHumanTargetWeights` is rejected by Character Schema.
+
+### Next calibration gate
+
+The next step is to replace the debug weight with a solver-backed renderer value:
+
+```text
+SCC shoulderBreadthCm
+        |
+        v
+candidate signed target weight
+        |
+        v
+real deformed mesh
+        |
+        v
+SCC-owned shoulder measurement
+        |
+        v
+residual error
+        |
+        +-- iterate until tolerance
+```
+
+The target pair should only move from `needs-calibration` to calibrated support after that loop has a clearly defined SCC-owned mesh measurement and test tolerance.
