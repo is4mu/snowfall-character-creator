@@ -542,3 +542,133 @@ The calibration is based only on:
 - pinned CC0 target deltas;
 - SCC-owned measurement semantics;
 - SCC-owned solver code.
+
+
+## Stage 5: real-mesh body shape prior
+
+The browser prototype now applies `body.shapePrior` to the real MakeHuman mesh before explicit SCC measurement calibration.
+
+The order is fixed:
+
+```text
+pinned CC0 base mesh
+        |
+        v
+body.shapePrior
+(renderer under-specification prior)
+        |
+        v
+explicit shoulderBreadthCm calibration
+        |
+        v
+canonical heightCm fit
+        |
+        v
+displayed mesh
+```
+
+This ordering is deliberate:
+
+> A shape prior may fill unspecified morphology, but it must never override an explicit canonical measurement.
+
+### Why SCC does not copy MakeHuman's macro logic
+
+The pinned MakeHuman assets do not expose one standalone morphology-gender target.
+
+Their macro asset set is factored across several source target groups plus age/body-composition dimensions.
+
+SCC does not copy the MakeHuman AGPL macro implementation.
+
+Instead, this prototype defines its own renderer-local endpoint policy over pinned CC0 assets.
+
+### Source-neutralized endpoints
+
+For this prototype:
+
+```text
+feminine endpoint
+  = equal blend of three pinned female young-adult macro targets
+
+masculine endpoint
+  = equal blend of three pinned male young-adult macro targets
+
+neutral
+  = exact midpoint between those two SCC renderer endpoints
+```
+
+The three upstream source groups are used only as an equal-weight asset basis.
+
+Their individual identity/categories are not copied into Character Schema and are not emitted as runtime renderer state.
+
+Only this survives into renderer diagnostics:
+
+```text
+source: body.shapePrior
+shapePrior: feminine | neutral | masculine
+normalizedValue: 0 | 0.5 | 1
+endpointPolicy: equal-three-source-group-blend
+```
+
+### Identity separation
+
+The renderer receives `body.shapePrior`.
+
+It does not receive or inspect `identity.gender`.
+
+Changing identity metadata therefore cannot silently change physical morphology.
+
+### Determinism and immutability
+
+Endpoint construction is deterministic:
+
+1. parse each pinned CC0 target;
+2. average sparse vertex deltas equally;
+3. interpolate between the two SCC endpoints;
+4. apply the resulting target to immutable original base positions.
+
+Every body re-render starts from the original base mesh.
+
+No prior, shoulder target, or height adjustment is accumulated from the previous UI state.
+
+### Shoulder calibration remains authoritative
+
+Before implementation, the pinned assets were analyzed directly.
+
+At canonical height 162 cm, the experimental shoulder target can still reach 38 cm after every prior:
+
+| shape prior | reachable shoulder breadth |
+| --- | ---: |
+| feminine | ~31.68–39.35 cm |
+| neutral | ~32.37–39.72 cm |
+| masculine | ~32.99–40.04 cm |
+
+The automated synthetic contract additionally verifies that an explicit 38 cm shoulder target re-converges after each shape prior.
+
+If a future prior makes an explicit measurement unreachable, the adapter must report that limitation rather than changing the canonical value.
+
+### Current whole-mesh limitation
+
+The upstream macro targets affect the full MakeHuman mesh, including head/face geometry.
+
+This is acceptable only for the current prototype.
+
+Body Model v1 intentionally does not claim ownership of detailed facial geometry, so stable promotion requires a visual/anatomical audit and one of:
+
+1. confirm that the gross prior effect is acceptable as a temporary whole-body renderer prior;
+2. define a renderer-local body/head blend boundary and suppress detailed facial deltas;
+3. replace these prototype endpoints with a future SCC-compatible body-only asset.
+
+This limitation does not change Character Schema.
+
+### Status
+
+The real-mesh shape prior is:
+
+```text
+renderer contract: scc-makehuman-shape-prior-v0
+status: prototype
+canonical input: body.shapePrior
+renderer output: disposable mesh positions
+```
+
+It should remain prototype-only until the whole-mesh visual audit is complete.
