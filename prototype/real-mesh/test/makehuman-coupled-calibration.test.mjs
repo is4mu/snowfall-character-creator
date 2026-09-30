@@ -113,7 +113,22 @@ test("discontinuous sign-change bracket cannot report false success", () => {
   assert.ok(Math.abs(result.best.residual) >= 0.99);
 });
 
-test("exact coarse hit prefers the smallest absolute renderer weight", () => {
+test("one exact coarse hit solves immediately", () => {
+  const result = solveRendererTargetByBrackets({
+    evaluateWeight: measured((weight) =>
+      weight === 0 ? 88 : 90
+    ),
+    targetValue: 88,
+    sampleCount: 5,
+    tolerance: 0.001,
+  });
+
+  assert.equal(result.status, "solved");
+  assert.equal(result.source, "coarse-exact-hit");
+  assert.equal(result.best.weight, 0);
+});
+
+test("multiple exact coarse hits are ambiguous", () => {
   const result = solveRendererTargetByBrackets({
     evaluateWeight: measured((weight) =>
       Math.abs(weight) === 0.5 ? 88 : 90
@@ -123,9 +138,8 @@ test("exact coarse hit prefers the smallest absolute renderer weight", () => {
     tolerance: 0.001,
   });
 
-  assert.equal(result.status, "solved");
-  assert.equal(result.source, "coarse-exact-hit");
-  assert.equal(result.best.weight, -0.5);
+  assert.equal(result.status, "ambiguous-multiple-brackets");
+  assert.equal(result.source, "multiple-coarse-exact-hits");
 });
 
 function coupledBoxFixture() {
