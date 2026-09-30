@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.unknown-field",
+  "identity": {
+    "displayName": "Invalid Extra Field",
+    "age": 25
+  }
+}
