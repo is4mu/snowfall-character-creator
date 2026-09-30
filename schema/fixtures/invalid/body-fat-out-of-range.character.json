@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.body-fat-range",
+  "identity": {
+    "displayName": "Invalid Body Fat"
+  },
+  "body": {
+    "model": "scc-body-v1",
+    "composition": {
+      "bodyFatFraction": 1.2
+    }
+  }
+}

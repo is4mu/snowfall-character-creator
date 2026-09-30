@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.body-missing-model",
+  "identity": {
+    "displayName": "Invalid Body Model"
+  },
+  "body": {
+    "measurements": {
+      "heightCm": 170
+    }
+  }
+}
