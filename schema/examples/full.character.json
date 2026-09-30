@@ -11,18 +11,38 @@
     "preferredLocale": "ja-JP"
   },
   "body": {
-    "heightCm": 162,
-    "massKg": 54,
+    "model": "scc-body-v1",
+    "shapePrior": "feminine",
     "measurements": {
+      "heightCm": 162,
+      "massKg": 54,
+      "armSpanCm": 161,
+      "sittingHeightCm": 85,
       "shoulderBreadthCm": 38,
       "chestCircumferenceCm": 88,
       "underbustCircumferenceCm": 72,
       "waistCircumferenceCm": 66,
       "hipCircumferenceCm": 91,
+      "neckCircumferenceCm": 31,
+      "upperArmCircumferenceCm": 26,
+      "forearmCircumferenceCm": 23,
+      "wristCircumferenceCm": 15,
+      "thighCircumferenceCm": 52,
+      "calfCircumferenceCm": 35,
+      "ankleCircumferenceCm": 21,
+      "armLengthCm": 58,
       "inseamCm": 74,
-      "footLengthCm": 25
+      "handLengthCm": 17.5,
+      "handBreadthCm": 7.5,
+      "footLengthCm": 25,
+      "footBreadthCm": 9.5,
+      "headCircumferenceCm": 55
     },
-    "notes": "Soft facial impression and balanced proportions."
+    "composition": {
+      "bodyFatFraction": 0.26,
+      "muscularity": 0.35
+    },
+    "notes": "Representative authored values for exercising the body schema."
   },
   "appearance": {
     "hair": {
