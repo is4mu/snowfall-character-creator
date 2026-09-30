@@ -94,3 +94,12 @@ Pinned body contract:
 ```
 
 Canonical height and shoulder calibration are normalized against body-only bounds. Helper geometry cannot affect anthropometry.
+
+
+## Cross-section measurement
+
+`body-cross-section.mjs` provides generic horizontal contour measurement over explicit body triangles.
+
+It is the shared geometry foundation for future chest, waist, hip, neck, and limb circumference calibration.
+
+The module does not choose anatomical measurement levels; it only measures the contour at a supplied plane.
