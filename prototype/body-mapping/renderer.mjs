@@ -82,12 +82,22 @@ function makeTorsoGeometry(dimensions) {
   const vertices = [];
   const indices = [];
 
-  for (const ring of rings) {
+  const shoulderSlopeRad = THREE.MathUtils.degToRad(
+    dimensions.shoulderSlopeDeg ?? 0,
+  );
+
+  for (let ringIndex = 0; ringIndex < rings.length; ringIndex += 1) {
+    const ring = rings[ringIndex];
     for (let i = 0; i < segments; i += 1) {
       const angle = (i / segments) * Math.PI * 2;
+      const x = Math.cos(angle) * ring.halfWidth;
+      const isShoulderRing = ringIndex === rings.length - 1;
+      const shoulderDrop = isShoulderRing
+        ? Math.tan(shoulderSlopeRad) * Math.abs(x)
+        : 0;
       vertices.push(
-        Math.cos(angle) * ring.halfWidth,
-        ring.y,
+        x,
+        ring.y - shoulderDrop,
         Math.sin(angle) * ring.halfDepth,
       );
     }
@@ -117,10 +127,8 @@ function makeTorsoGeometry(dimensions) {
 function addLeg(group, side, dimensions, baseY, material, jointMat) {
   const leg = dimensions.legs;
   const footHeight = Math.max(0.035, leg.ankleRadiusM * 1.5);
-  const targetLegHeight = Math.max(0.2, leg.upperLengthM + leg.lowerLengthM);
-  const usable = Math.max(0.18, targetLegHeight - footHeight);
-  const upperLength = usable * 0.53;
-  const lowerLength = usable * 0.47;
+  const upperLength = Math.max(0.08, leg.upperLengthM);
+  const lowerLength = Math.max(0.08, leg.lowerLengthM);
   const x = side * dimensions.torso.hipHalfWidthM * 0.50;
 
   const foot = makeBox(
@@ -248,7 +256,10 @@ export function createProceduralBody(renderModel) {
   torso.position.set(0, torsoBaseY, 0);
   group.add(torso);
 
-  const shoulderY = torsoBaseY + d.torso.heightM * 0.92;
+  const shoulderSlopeRad = THREE.MathUtils.degToRad(d.shoulderSlopeDeg ?? 0);
+  const shoulderDrop =
+    Math.tan(shoulderSlopeRad) * (d.shoulderBreadthM / 2);
+  const shoulderY = torsoBaseY + d.torso.heightM - shoulderDrop;
   addArm(group, -1, d, shoulderY, material, jointMat);
   addArm(group, 1, d, shoulderY, material, jointMat);
 
