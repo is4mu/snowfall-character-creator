@@ -76,6 +76,48 @@ test("samples a deterministic measured torso circumference curve", () => {
     result.samples[1].circumferenceCm >
       result.samples[2].circumferenceCm,
   );
+
+  assert.deepEqual(
+    result.samples[1].selectedLoopGeometry.boundsUnits,
+    {
+      minX: -2,
+      maxX: 2,
+      minZ: -1,
+      maxZ: 1,
+    },
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.breadthUnits,
+    4,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.depthUnits,
+    2,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.positiveZExtentUnits,
+    1,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.negativeZExtentUnits,
+    1,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.breadthCm,
+    160,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.depthCm,
+    80,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.positiveZExtentCm,
+    40,
+  );
+  assert.equal(
+    result.samples[1].selectedLoopGeometry.negativeZExtentCm,
+    40,
+  );
 });
 
 test("invalid topology is retained instead of fabricated as a measurement", () => {
@@ -122,4 +164,22 @@ test("audit band and sample count are validated explicitly", () => {
     }),
     />= 2/,
   );
+});
+
+test("explicit center shifts signed Z extents without changing loop depth", () => {
+  const result = sampleTorsoCrossSectionCurve({
+    ...stackedTorsoMesh(),
+    canonicalHeightCm: 160,
+    lowerBodyHeightFraction: 0.5,
+    upperBodyHeightFraction: 0.5001,
+    sampleCount: 2,
+    center: {x: 0, z: 0.25},
+  });
+
+  const geometry = result.samples[0].selectedLoopGeometry;
+  assert.equal(geometry.depthUnits, 2);
+  assert.equal(geometry.positiveZExtentUnits, 0.75);
+  assert.equal(geometry.negativeZExtentUnits, 1.25);
+  assert.equal(geometry.positiveZExtentCm, 30);
+  assert.equal(geometry.negativeZExtentCm, 50);
 });
