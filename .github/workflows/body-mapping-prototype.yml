@@ -1,0 +1,40 @@
+name: Body mapping prototype
+
+on:
+  pull_request:
+    paths:
+      - "prototype/body-mapping/**"
+      - ".github/workflows/body-mapping-prototype.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "prototype/body-mapping/**"
+      - ".github/workflows/body-mapping-prototype.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-body-mapping:
+    name: Test body mapping adapter
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Check JavaScript module syntax
+        run: |
+          node --check prototype/body-mapping/adapter.mjs
+          node --check prototype/body-mapping/renderer.mjs
+          node --check prototype/body-mapping/app.mjs
+
+      - name: Run adapter contract tests
+        run: node --test prototype/body-mapping/test/*.test.mjs
