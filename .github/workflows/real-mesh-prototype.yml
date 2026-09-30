@@ -39,6 +39,7 @@ jobs:
           node --check prototype/real-mesh/makehuman-debug-target.mjs
           node --check prototype/real-mesh/makehuman-measurement.mjs
           node --check prototype/real-mesh/makehuman-calibration.mjs
+          node --check prototype/real-mesh/makehuman-shape-prior.mjs
           node --check prototype/real-mesh/makehuman-geometry.mjs
           node --check prototype/real-mesh/app.mjs
 
