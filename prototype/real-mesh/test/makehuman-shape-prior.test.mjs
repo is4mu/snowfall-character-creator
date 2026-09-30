@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { solveShoulderBreadthTarget } from "../makehuman-calibration.mjs";
 import {
   SHAPE_PRIOR_CONTRACT,
   applyShapePrior,
@@ -117,4 +118,61 @@ test("shape prior endpoints are computed once from equal source counts", () => {
   assert.deepEqual(endpoints.masculine, [
     {index: 0, dx: 6, dy: 0, dz: 0},
   ]);
+});
+
+test("explicit shoulder measurement reconverges after every shape prior", () => {
+  const vertexCount = 8050;
+  const base = new Float64Array(vertexCount * 3);
+
+  base[1] = -8;
+  base[4] = 8;
+
+  base[1357 * 3] = -1.8;
+  base[1357 * 3 + 1] = 5;
+  base[8049 * 3] = 1.8;
+  base[8049 * 3 + 1] = 5;
+
+  const endpoints = composeShapePriorEndpoints({
+    feminineTargets: [[
+      {index: 0, dx: 0, dy: 0.2, dz: 0},
+      {index: 1, dx: 0, dy: -0.2, dz: 0},
+      {index: 1357, dx: 0.1, dy: 0, dz: 0},
+      {index: 8049, dx: -0.1, dy: 0, dz: 0},
+    ]],
+    masculineTargets: [[
+      {index: 0, dx: 0, dy: -0.2, dz: 0},
+      {index: 1, dx: 0, dy: 0.2, dz: 0},
+      {index: 1357, dx: -0.1, dy: 0, dz: 0},
+      {index: 8049, dx: 0.1, dy: 0, dz: 0},
+    ]],
+  });
+
+  const decrease = [
+    {index: 1357, dx: 0.3, dy: 0, dz: 0},
+    {index: 8049, dx: -0.3, dy: 0, dz: 0},
+  ];
+  const increase = [
+    {index: 1357, dx: -0.3, dy: 0, dz: 0},
+    {index: 8049, dx: 0.3, dy: 0, dz: 0},
+  ];
+
+  for (const shapePrior of ["feminine", "neutral", "masculine"]) {
+    const prior = applyShapePrior({
+      basePositions: base,
+      endpoints,
+      shapePrior,
+    });
+
+    const solved = solveShoulderBreadthTarget({
+      basePositions: prior.positions,
+      decreaseDeltas: decrease,
+      increaseDeltas: increase,
+      canonicalHeightCm: 162,
+      targetShoulderBreadthCm: 38,
+      toleranceCm: 0.01,
+    });
+
+    assert.equal(solved.status, "solved");
+    assert.ok(Math.abs(solved.measuredCm - 38) <= 0.01);
+  }
 });
