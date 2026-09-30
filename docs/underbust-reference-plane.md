@@ -57,8 +57,8 @@ It searches only below that chest level.
 Default experimental policy:
 
 ```text
-maxBelowChestFraction:             0.12
-minBelowChestFraction:             0.01
+maxBelowChestFraction:             0.08
+minBelowChestFraction:             0.001
 sampleCount:                       29
 minProminenceHeightFraction:       0.002
 minPeakSeparationHeightFraction:   0.01
@@ -131,3 +131,24 @@ Before the finder is used by an underbust calibration solver:
 3. the known masculine positive-extreme case must remain an explicit negative example unless new evidence justifies a different policy;
 4. visual audit must confirm the selected level is anatomically consistent with SCC underbust semantics;
 5. `underbustCircumferenceCm` remains `needs-calibration` until the full coupled solver is validated.
+
+
+## Search-band refinement from acceptance audit
+
+The first implementation audit exposed an important false-positive mode.
+
+With a chest reference at approximately `0.73`, stopping the search at `0.72` excluded the real upper-chest prominence around `0.728`. The detector could then qualify a much lower torso minimum near `0.618`, which is not an acceptable underbust interpretation.
+
+The experimental policy was therefore tightened to:
+
+```text
+maxBelowChestFraction: 0.08
+minBelowChestFraction: 0.001
+```
+
+This serves two purposes:
+
+- include the immediately sub-chest prominence needed to establish local-minimum prominence;
+- exclude unrelated lower-torso minima that are too far below the authored chest reference to represent "immediately below chest tissue."
+
+The pinned real-mesh acceptance audit locks this behavior across all sampled underbust weights. Every sampled case except the known masculine `+1` negative example must select a landmark within 0.08 body-height fractions below the current chest reference.
