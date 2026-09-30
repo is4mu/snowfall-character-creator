@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0-draft.1",
+  "characterId": "invalid.personality-range",
+  "identity": {
+    "displayName": "Invalid Personality"
+  },
+  "personality": {
+    "model": "scc-core-v1",
+    "traits": {
+      "openness": 0.5,
+      "conscientiousness": 0.5,
+      "extraversion": 1.2,
+      "agreeableness": 0.5,
+      "emotionalStability": 0.5
+    }
+  }
+}
