@@ -351,6 +351,12 @@ function runChestReferenceSweep({
   const pairedThoraxUnderbustTransitions =
     detectUnderbustTransitions(pairedThoraxSamples);
 
+  assert.equal(
+    pairedThoraxChestJumps.length,
+    0,
+    `${shapePrior} shoulder-${targetShoulderBreadthCm}: paired thorax chest reference switched by more than one normal sample step`,
+  );
+
   const jumpNeighborhoods = chestReferenceJumps.map((jump) =>
     buildSweepJumpNeighborhood({
       jump,
