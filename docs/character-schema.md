@@ -98,41 +98,26 @@ The core schema does not need a universal taxonomy of gender to identify or rend
 
 ## Body
 
-The body model stores physical dimensions using explicit metric units.
+Body data uses the versioned `scc-body-v1` model.
 
-Current fields include:
+The model separates:
 
-- standing height in centimeters;
-- body mass in kilograms;
-- shoulder breadth;
-- chest circumference;
-- underbust circumference;
-- waist circumference;
-- hip circumference;
-- inseam;
-- foot length.
+- an optional renderer-independent `shapePrior`;
+- anthropometric measurements;
+- body-composition authoring data;
+- renderer-specific mapping, which remains outside the core schema.
 
-### Why centimeters instead of clothing sizes
+The current draft supports 22 linear measurements in centimeters plus body mass in kilograms, including overall proportions, torso circumferences, limb circumferences, hand/foot dimensions, and head circumference.
 
-Clothing and shoe sizes are regional presentation systems. A canonical character should store measurements from which those sizes can be derived.
+`shapePrior` may be `masculine`, `feminine`, or `neutral`. It is only an under-specification prior for 3D generation. It is not gender identity or biological sex and must never be inferred from `identity.gender`.
 
-### Why renderer morphs are excluded
+Composition currently supports optional `bodyFatFraction` and normalized `muscularity`.
 
-A value such as `mesh_morph_17 = 0.63` is only meaningful to one asset pipeline. It does not describe the character independently of that renderer.
+Regional clothing sizes, shoe sizes, bra sizes, renderer morph weights, and mesh identifiers remain derived or adapter-owned rather than canonical body data.
 
-A future 3D layer should map semantic character measurements to renderer-specific morph targets.
+Detailed surface-shape controls such as chest/breast projection, abdomen/glute projection, posture, asymmetry, and regional muscle distribution are intentionally deferred until a 3D prototype demonstrates which parameters need stable renderer-independent semantics.
 
-### Anatomical base profiles
-
-Draft 1 does not yet standardize a male/female/androgynous anatomical base profile.
-
-The creator UI may need such a choice to initialize a neutral 3D body, but the persistent meaning must be defined before it becomes a core field. In particular, the renderer must not infer physical anatomy from `identity.gender`.
-
-A later draft should add an explicit body-domain concept only after the 3D mapping prototype establishes what information is actually required and how it can remain renderer-independent.
-
-### Notes
-
-`body.notes` is a temporary escape hatch for durable physical characteristics that have not yet earned a stable structured field. It should not become a substitute for adding well-defined fields when a concept is widely useful.
+See [Body Model v1](body-model.md) for the complete measurement list, design rationale, renderer boundary, and validation questions.
 
 ## Appearance
 
