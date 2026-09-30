@@ -12,8 +12,8 @@ export const UNDERBUST_REFERENCE_PLANE_CONTRACT =
 
 export const UNDERBUST_REFERENCE_POLICY = Object.freeze({
   status: "experimental",
-  maxBelowChestFraction: 0.12,
-  minBelowChestFraction: 0.01,
+  maxBelowChestFraction: 0.08,
+  minBelowChestFraction: 0.001,
   sampleCount: 29,
   minProminenceHeightFraction: 0.002,
   minPeakSeparationHeightFraction: 0.01,
