@@ -122,6 +122,14 @@ A value such as `mesh_morph_17 = 0.63` is only meaningful to one asset pipeline.
 
 A future 3D layer should map semantic character measurements to renderer-specific morph targets.
 
+### Anatomical base profiles
+
+Draft 1 does not yet standardize a male/female/androgynous anatomical base profile.
+
+The creator UI may need such a choice to initialize a neutral 3D body, but the persistent meaning must be defined before it becomes a core field. In particular, the renderer must not infer physical anatomy from `identity.gender`.
+
+A later draft should add an explicit body-domain concept only after the 3D mapping prototype establishes what information is actually required and how it can remain renderer-independent.
+
 ### Notes
 
 `body.notes` is a temporary escape hatch for durable physical characteristics that have not yet earned a stable structured field. It should not become a substitute for adding well-defined fields when a concept is widely useful.
@@ -154,6 +162,18 @@ The draft core model is `scc-core-v1` with five required traits:
 - emotional stability.
 
 Each value is normalized to `0..1`.
+
+The current endpoint semantics are:
+
+| Trait | 0.0 direction | 1.0 direction |
+| --- | --- | --- |
+| openness | familiar, conventional | exploratory, imaginative |
+| conscientiousness | spontaneous, flexible | planned, organized |
+| extraversion | reserved, low-stimulation | outgoing, high-stimulation |
+| agreeableness | competitive, blunt | cooperative, considerate |
+| emotional stability | emotionally reactive | calm, resilient |
+
+The endpoints are authoring directions, not value judgments. A value near either end may be appropriate for a well-designed character.
 
 These values are character-authoring dimensions, not clinical measurements or psychological diagnoses.
 
