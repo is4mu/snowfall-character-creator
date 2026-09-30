@@ -152,6 +152,29 @@ function renderDiagnostics() {
       authoredCoverage,
       calibrationQueue: plan.calibrationQueue,
       prototypeCalibrations: plan.prototypeCalibrations,
+      coupledChestCalibration: coupledChestCalibration
+        ? {
+            contract: coupledChestCalibration.contract,
+            status: coupledChestCalibration.status,
+            targetChestCm:
+              coupledChestCalibration.targetChestCircumferenceCm,
+            measuredChestCm: coupledChestCalibration.chestMeasuredCm,
+            chestResidualCm: coupledChestCalibration.chestResidualCm,
+            bustRendererWeight: coupledChestCalibration.bustWeight,
+            targetShoulderCm:
+              coupledChestCalibration.targetShoulderBreadthCm,
+            measuredShoulderCm:
+              coupledChestCalibration.shoulderMeasuredCm,
+            shoulderResidualCm:
+              coupledChestCalibration.shoulderResidualCm,
+            shoulderRendererWeight:
+              coupledChestCalibration.shoulderWeight,
+            measuredRangeCm:
+              coupledChestCalibration.scan?.measuredRange ?? null,
+            bracketCount:
+              coupledChestCalibration.scan?.brackets?.length ?? 0,
+          }
+        : {status: "not-ready"},
       shoulderCalibration: shoulderCalibration
         ? {
             contract: shoulderCalibration.contract,
