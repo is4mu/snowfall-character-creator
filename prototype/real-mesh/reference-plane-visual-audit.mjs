@@ -1,6 +1,10 @@
 import {
   findUnderbustReferencePlane,
 } from "./underbust-reference-plane.mjs";
+import {
+  measureHorizontalSurfaceLoopsUnits,
+  selectCentralSurfaceLoop,
+} from "./body-cross-section.mjs";
 
 export const REFERENCE_PLANE_VISUAL_AUDIT_CONTRACT =
   "scc-reference-plane-visual-audit-v0";
@@ -27,6 +31,136 @@ function selectedChestSummary(chestReference) {
     status: "selected",
     heightFraction: selected.heightFraction,
     planeY: selected.planeY,
+  };
+}
+
+function finiteCenter(center) {
+  return (
+    Number.isFinite(center?.x) &&
+    Number.isFinite(center?.z)
+  );
+}
+
+export function extractReferenceContour({
+  positions,
+  triangles,
+  planeY,
+  center = {x: 0, z: 0},
+  crossSectionOptions = {},
+}) {
+  if (!Number.isFinite(planeY)) {
+    throw new TypeError("planeY must be finite");
+  }
+  if (!finiteCenter(center)) {
+    throw new TypeError(
+      "center must contain finite x and z values",
+    );
+  }
+
+  const crossSection = measureHorizontalSurfaceLoopsUnits(
+    positions,
+    triangles,
+    planeY,
+    crossSectionOptions,
+  );
+
+  if (crossSection.openChains.length > 0) {
+    return {
+      status: "open-cross-section",
+      planeY,
+      points: null,
+      perimeterUnits: null,
+      loopCount: crossSection.loops.length,
+      openChainCount: crossSection.openChains.length,
+      branchNodeCount: crossSection.branchNodeCount,
+    };
+  }
+
+  if (crossSection.branchNodeCount > 0) {
+    return {
+      status: "non-manifold-cross-section",
+      planeY,
+      points: null,
+      perimeterUnits: null,
+      loopCount: crossSection.loops.length,
+      openChainCount: 0,
+      branchNodeCount: crossSection.branchNodeCount,
+    };
+  }
+
+  if (crossSection.loops.length === 0) {
+    return {
+      status: "no-loop",
+      planeY,
+      points: null,
+      perimeterUnits: null,
+      loopCount: 0,
+      openChainCount: 0,
+      branchNodeCount: 0,
+    };
+  }
+
+  const loop = selectCentralSurfaceLoop(
+    crossSection.loops,
+    center,
+  );
+
+  return {
+    status: "selected",
+    planeY,
+    points: loop.points.map((point) => ({
+      x: point.x,
+      y: planeY,
+      z: point.z,
+    })),
+    perimeterUnits: loop.perimeterUnits,
+    centroid: loop.centroid,
+    loopCount: crossSection.loops.length,
+    openChainCount: 0,
+    branchNodeCount: 0,
+  };
+}
+
+export function buildChestSolverPresentation({
+  coupledChestCalibration,
+  requestedChestCm,
+  displayedBodySource,
+}) {
+  if (!Number.isFinite(requestedChestCm)) {
+    return {
+      status: "not-authored",
+      requestedChestCm: null,
+      measuredChestCm: null,
+      residualCm: null,
+      reachableRangeCm: null,
+      bustWeight: null,
+      displayedBodySource,
+    };
+  }
+
+  const range = coupledChestCalibration?.scan?.measuredRange;
+  return {
+    status:
+      coupledChestCalibration?.status ?? "not-ready",
+    requestedChestCm,
+    measuredChestCm:
+      coupledChestCalibration?.chestMeasuredCm ?? null,
+    residualCm:
+      coupledChestCalibration?.chestResidualCm ?? null,
+    reachableRangeCm:
+      Number.isFinite(range?.min) &&
+      Number.isFinite(range?.max)
+        ? {min: range.min, max: range.max}
+        : null,
+    bustWeight:
+      coupledChestCalibration?.bustWeight ?? null,
+    displayedBodySource:
+      displayedBodySource ??
+      (
+        coupledChestCalibration?.status === "solved"
+          ? "coupled-solved"
+          : "shoulder-only-fallback"
+      ),
   };
 }
 
@@ -150,12 +284,36 @@ export function evaluateReferencePlaneVisualAudit({
     ...underbustOptions,
   });
 
-  return {
-    ...buildReferencePlaneVisualAuditState({
-      chestReference,
-      underbustReference,
-      canonicalHeightCm,
-    }),
+  const state = buildReferencePlaneVisualAuditState({
+    chestReference,
     underbustReference,
+    canonicalHeightCm,
+  });
+
+  const chestContour = extractReferenceContour({
+    positions,
+    triangles,
+    planeY: chest.planeY,
+    center: chestReference?.bodyCenter ?? {x: 0, z: 0},
+  });
+
+  const underbustContour =
+    state.underbust.status === "selected"
+      ? extractReferenceContour({
+          positions,
+          triangles,
+          planeY: state.underbust.planeY,
+          center:
+            underbustReference?.bodyCenter ??
+            chestReference?.bodyCenter ??
+            {x: 0, z: 0},
+        })
+      : null;
+
+  return {
+    ...state,
+    underbustReference,
+    chestContour,
+    underbustContour,
   };
 }

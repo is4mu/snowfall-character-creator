@@ -10,15 +10,29 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
+  overflow: hidden;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
 header {
   display: flex;
+  flex: 0 0 auto;
   justify-content: space-between;
   gap: 2rem;
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #d8d8d8;
   background: #fff;
 }
@@ -63,13 +77,16 @@ button {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(250px, 320px) minmax(440px, 1fr) minmax(300px, 390px);
-  min-height: calc(100vh - 130px);
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(250px, 320px) minmax(440px, 1fr) minmax(280px, 360px);
 }
 
 .panel {
-  padding: 1.25rem;
+  min-height: 0;
+  padding: 1.1rem;
   overflow: auto;
+  overscroll-behavior: contain;
   background: #fff;
 }
 
@@ -110,7 +127,8 @@ select {
 
 .viewport-wrap {
   position: relative;
-  min-height: 680px;
+  min-height: 0;
+  overflow: hidden;
   background: #f3f3f3;
 }
 
@@ -181,6 +199,33 @@ select {
   background: #f2994a;
 }
 
+.solver-status {
+  border: 1px solid #d7d7d7;
+  background: #fafafa;
+  font-size: 0.76rem;
+}
+
+.solver-status[data-status="solved"] {
+  border-color: #8fc7a6;
+}
+
+.solver-status[data-status="out-of-range"],
+.solver-status[data-status="no-bracket"],
+.solver-status[data-status="discontinuous-bracket"],
+.solver-status[data-status="ambiguous-multiple-brackets"] {
+  border-color: #e0b078;
+}
+
+details {
+  margin: 0.8rem 0;
+}
+
+summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
 pre {
   overflow: auto;
   padding: 0.75rem;
@@ -191,8 +236,35 @@ pre {
 }
 
 @media (max-width: 1050px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  body {
+    overflow: auto;
+  }
+
+  main {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
   .workspace {
+    display: grid;
+    min-height: auto;
     grid-template-columns: 1fr;
+  }
+
+  .panel {
+    overflow: visible;
   }
 
   .viewport-wrap {

@@ -28,6 +28,7 @@ import {
   composeShapePriorEndpoints,
 } from "./makehuman-shape-prior.mjs";
 import {
+  buildChestSolverPresentation,
   evaluateReferencePlaneVisualAudit,
 } from "./reference-plane-visual-audit.mjs";
 
@@ -44,8 +45,8 @@ const chestCircumferenceInput = document.querySelector("#chest-circumference");
 const chestCircumferenceValue = document.querySelector(
   "#chest-circumference-value",
 );
-const shoulderCalibrationStatus = document.querySelector(
-  "#shoulder-calibration-status",
+const chestSolverStatus = document.querySelector(
+  "#chest-solver-status",
 );
 const referencePlaneToggle = document.querySelector(
   "#reference-plane-toggle",
@@ -108,7 +109,7 @@ function deepClone(value) {
 function resize() {
   const rect = viewport.getBoundingClientRect();
   const width = Math.max(320, rect.width);
-  const height = Math.max(500, rect.height);
+  const height = Math.max(320, rect.height);
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
@@ -148,68 +149,43 @@ function clearReferencePlaneOverlay() {
   referencePlaneOverlayGroup = undefined;
 }
 
-function createReferencePlaneMarker({
-  planeY,
+function createReferenceContourMarker({
+  contour,
   color,
   name,
 }) {
-  if (!currentBodyBounds) {
-    throw new Error(
-      "current body bounds are required for reference-plane markers",
-    );
+  if (
+    contour?.status !== "selected" ||
+    !Array.isArray(contour.points) ||
+    contour.points.length < 3
+  ) {
+    return null;
   }
 
-  const marker = new THREE.Group();
-  marker.name = name;
-  marker.position.set(
-    (currentBodyBounds.minX + currentBodyBounds.maxX) / 2,
-    planeY,
-    (currentBodyBounds.minZ + currentBodyBounds.maxZ) / 2,
+  const coordinates = [];
+  for (const point of contour.points) {
+    coordinates.push(point.x, point.y, point.z);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(coordinates, 3),
   );
 
-  const width = Math.max(
-    Math.min(
-      currentBodyBounds.width * 1.08,
-      currentBodyBounds.height * 0.4,
-    ),
-    0.01,
-  );
-  const depth = Math.max(
-    Math.min(
-      currentBodyBounds.depth * 1.08,
-      currentBodyBounds.height * 0.25,
-    ),
-    0.01,
-  );
-  const geometry = new THREE.PlaneGeometry(width, depth);
-  const surface = new THREE.Mesh(
+  const line = new THREE.LineLoop(
     geometry,
-    new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.13,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    }),
-  );
-  surface.rotation.x = -Math.PI / 2;
-  surface.renderOrder = 20;
-  marker.add(surface);
-
-  const outline = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geometry),
     new THREE.LineBasicMaterial({
       color,
       transparent: true,
-      opacity: 0.95,
+      opacity: 0.98,
       depthTest: false,
+      depthWrite: false,
     }),
   );
-  outline.rotation.x = -Math.PI / 2;
-  outline.renderOrder = 21;
-  marker.add(outline);
-
-  return marker;
+  line.name = name;
+  line.renderOrder = 30;
+  return line;
 }
 
 function renderReferencePlaneStatus() {
@@ -220,7 +196,7 @@ function renderReferencePlaneStatus() {
       {
         status: "not-ready",
         note:
-          "Reference planes require a solved chest calibration.",
+          "Reference contours require a solved chest calibration.",
       },
       null,
       2,
@@ -237,7 +213,7 @@ function renderReferencePlaneStatus() {
       chestToUnderbustCm:
         referencePlaneAudit.separationCm,
       note:
-        "Visual audit only. These planes are renderer diagnostics and are never serialized into Character Schema.",
+        "Visual audit only. These contours are the body-surface cross-sections used for measurement and are never serialized into Character Schema.",
     },
     null,
     2,
@@ -259,30 +235,21 @@ function renderReferencePlaneOverlay() {
   }
 
   const group = new THREE.Group();
-  group.name = "SCC reference-plane visual audit";
+  group.name = "SCC reference contour visual audit";
 
-  if (referencePlaneAudit.chest.status === "selected") {
-    group.add(
-      createReferencePlaneMarker({
-        planeY: referencePlaneAudit.chest.planeY,
-        color: 0x2f80ed,
-        name: "SCC chest reference plane",
-      }),
-    );
-  }
+  const chestContour = createReferenceContourMarker({
+    contour: referencePlaneAudit.chestContour,
+    color: 0x2f80ed,
+    name: "SCC chest measurement contour",
+  });
+  if (chestContour) group.add(chestContour);
 
-  if (
-    referencePlaneAudit.status === "ready" &&
-    referencePlaneAudit.underbust.status === "selected"
-  ) {
-    group.add(
-      createReferencePlaneMarker({
-        planeY: referencePlaneAudit.underbust.planeY,
-        color: 0xf2994a,
-        name: "SCC underbust reference plane",
-      }),
-    );
-  }
+  const underbustContour = createReferenceContourMarker({
+    contour: referencePlaneAudit.underbustContour,
+    color: 0xf2994a,
+    name: "SCC underbust measurement contour",
+  });
+  if (underbustContour) group.add(underbustContour);
 
   if (group.children.length === 0) {
     disposeObject3D(group);
@@ -313,6 +280,47 @@ function updateReferencePlaneAudit({
     surfaceDirection: {x: 0, z: 1},
   });
   renderReferencePlaneOverlay();
+}
+
+function formatCm(value, digits = 2) {
+  return Number.isFinite(value)
+    ? `${value.toFixed(digits)} cm`
+    : "—";
+}
+
+function formatWeight(value) {
+  return Number.isFinite(value)
+    ? value.toFixed(4)
+    : "—";
+}
+
+function renderChestSolverStatus(displayedBodySource) {
+  if (!chestSolverStatus) return;
+
+  const presentation = buildChestSolverPresentation({
+    coupledChestCalibration,
+    requestedChestCm:
+      workingBody?.measurements?.chestCircumferenceCm,
+    displayedBodySource,
+  });
+
+  const range = presentation.reachableRangeCm;
+  const lines = [
+    `status: ${presentation.status}`,
+    `requested: ${formatCm(presentation.requestedChestCm, 1)}`,
+    `measured: ${formatCm(presentation.measuredChestCm)}`,
+    `residual: ${formatCm(presentation.residualCm, 3)}`,
+    `reachable now: ${
+      range
+        ? `${range.min.toFixed(2)}–${range.max.toFixed(2)} cm`
+        : "—"
+    }`,
+    `bust renderer weight: ${formatWeight(presentation.bustWeight)}`,
+    `displayed body: ${presentation.displayedBodySource ?? "not-ready"}`,
+  ];
+
+  chestSolverStatus.textContent = lines.join("\n");
+  chestSolverStatus.dataset.status = presentation.status;
 }
 
 function fitMeshToCanonicalHeight(targetHeightM) {
@@ -503,8 +511,7 @@ function renderCanonicalBody() {
     coupledChestCalibration = undefined;
     clearReferencePlaneAudit();
     updateMeshPositions(priorPositions);
-    shoulderCalibrationStatus.textContent =
-      "Calibration requires loaded targets plus canonical heightCm and shoulderBreadthCm.";
+    renderChestSolverStatus("shape-prior-only");
     renderDiagnostics();
     return;
   }
@@ -545,29 +552,7 @@ function renderCanonicalBody() {
         chestReference:
           coupledChestCalibration.best.evaluation.chest.reference,
       });
-      shoulderCalibrationStatus.textContent = JSON.stringify(
-        {
-          status: coupledChestCalibration.status,
-          experimental: true,
-          targetChestCm: targetChestCircumferenceCm,
-          measuredChestCm: coupledChestCalibration.chestMeasuredCm,
-          chestResidualCm: coupledChestCalibration.chestResidualCm,
-          bustRendererWeight: coupledChestCalibration.bustWeight,
-          targetShoulderCm: targetShoulderBreadthCm,
-          measuredShoulderCm:
-            coupledChestCalibration.shoulderMeasuredCm,
-          shoulderResidualCm:
-            coupledChestCalibration.shoulderResidualCm,
-          shoulderRendererWeight:
-            coupledChestCalibration.shoulderWeight,
-          scanRangeCm:
-            coupledChestCalibration.scan?.measuredRange ?? null,
-          precedence:
-            "shapePrior -> bust candidate -> shoulder re-solve -> chest re-measure -> height fit",
-        },
-        null,
-        2,
-      );
+      renderChestSolverStatus("coupled-solved");
       renderDiagnostics();
       return;
     }
@@ -588,24 +573,7 @@ function renderCanonicalBody() {
   });
 
   updateMeshPositions(shoulderCalibration.positions);
-  shoulderCalibrationStatus.textContent = JSON.stringify(
-    {
-      status: coupledChestCalibration
-        ? `chest-${coupledChestCalibration.status}; shoulder-fallback-${shoulderCalibration.status}`
-        : shoulderCalibration.status,
-      experimental: true,
-      targetShoulderCm: shoulderCalibration.targetCm,
-      measuredShoulderCm: shoulderCalibration.measuredCm,
-      shoulderResidualCm: shoulderCalibration.residualCm,
-      shoulderRendererWeight: shoulderCalibration.weight,
-      chestTargetCm: targetChestCircumferenceCm ?? null,
-      chestSolved: false,
-      precedence:
-        "shapePrior -> explicit shoulderBreadthCm -> height fit",
-    },
-    null,
-    2,
-  );
+  renderChestSolverStatus("shoulder-only-fallback");
   renderDiagnostics();
 }
 
@@ -780,8 +748,8 @@ async function loadCharacter() {
     workingBody.measurements?.chestCircumferenceCm ?? 88;
   chestCircumferenceValue.textContent =
     `${chestCircumferenceInput.value} cm`;
-  shoulderCalibrationStatus.textContent =
-    "Loading pinned target assets and experimental renderer landmarks…";
+  chestSolverStatus.textContent =
+    "Loading experimental coupled calibration…";
 
   renderDiagnostics();
   await loadRealMesh();

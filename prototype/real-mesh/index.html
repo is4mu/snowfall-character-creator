@@ -100,15 +100,23 @@
             serialized into Character Schema.
           </p>
 
-          <pre id="shoulder-calibration-status">
+          <pre id="chest-solver-status" class="solver-status">
 Loading experimental coupled calibration…
           </pre>
 
-          <h2>Reference-plane visual audit</h2>
+          <p class="note">
+            Chest circumference changes the solved torso circumference/depth.
+            The measurement height may stay nearly unchanged. Side view makes
+            the deformation easier to see. If the requested value is outside
+            the current renderer range, the preview explicitly falls back to
+            the shoulder-only body.
+          </p>
+
+          <h2>Reference contour visual audit</h2>
 
           <label class="toggle-control">
             <input id="reference-plane-toggle" type="checkbox" checked />
-            <span>Show reference planes</span>
+            <span>Show measurement contours</span>
           </label>
 
           <div class="reference-plane-legend" aria-label="Reference plane legend">
@@ -123,17 +131,19 @@ Loading experimental coupled calibration…
           </div>
 
           <p class="note">
-            These overlays are renderer diagnostics only. When the experimental
-            underbust finder reports no stable landmark, no underbust plane is
-            drawn.
+            The colored lines are the exact body-surface cross-sections used
+            for measurement. When the experimental underbust finder reports no
+            stable landmark, no underbust contour is drawn.
           </p>
 
           <pre id="reference-plane-status">
-Reference-plane audit requires a solved chest calibration…
+Reference-contour audit requires a solved chest calibration…
           </pre>
 
-          <h2>Asset status</h2>
-          <pre id="asset-status">Loading pinned CC0 base mesh…</pre>
+          <details>
+            <summary>Asset status</summary>
+            <pre id="asset-status">Loading pinned CC0 base mesh…</pre>
+          </details>
         </aside>
 
         <section class="viewport-wrap">
@@ -142,8 +152,12 @@ Reference-plane audit requires a solved chest calibration…
         </section>
 
         <aside class="panel diagnostics-panel">
-          <h2>Mapping diagnostics</h2>
-          <pre id="diagnostics"></pre>
+          <h2>Developer diagnostics</h2>
+
+          <details>
+            <summary>Raw mapping diagnostics</summary>
+            <pre id="diagnostics"></pre>
+          </details>
 
           <details>
             <summary>Current SCC body JSON</summary>
