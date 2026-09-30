@@ -90,11 +90,14 @@ function summarizeSample({
   };
 }
 
-function fallbackFullestThorax(samples, tieToleranceUnits) {
+function selectGreatestAnteriorSample(
+  samples,
+  tieToleranceUnits,
+) {
   const measured = samples.filter(
     (sample) =>
       sample.status === "measured" &&
-      Number.isFinite(sample.perimeterUnits),
+      Number.isFinite(sample.directionalSurfaceUnits),
   );
   if (measured.length === 0) return null;
 
@@ -103,10 +106,11 @@ function fallbackFullestThorax(samples, tieToleranceUnits) {
       measured[measured.length - 1].heightFraction) / 2;
 
   return [...measured].sort((a, b) => {
-    const perimeterDelta =
-      b.perimeterUnits - a.perimeterUnits;
-    if (Math.abs(perimeterDelta) > tieToleranceUnits) {
-      return perimeterDelta;
+    const anteriorDelta =
+      b.directionalSurfaceUnits -
+      a.directionalSurfaceUnits;
+    if (Math.abs(anteriorDelta) > tieToleranceUnits) {
+      return anteriorDelta;
     }
 
     const aMid = Math.abs(a.heightFraction - midpoint);
@@ -114,6 +118,30 @@ function fallbackFullestThorax(samples, tieToleranceUnits) {
     if (aMid !== bMid) return aMid - bMid;
     return a.heightFraction - b.heightFraction;
   })[0];
+}
+
+function selectUnderbustForChestPeak(
+  pairCandidates,
+  chestSampleIndex,
+) {
+  const matching = pairCandidates
+    .filter(
+      (candidate) =>
+        candidate.qualifies &&
+        candidate.peak?.index === chestSampleIndex,
+    )
+    .sort((a, b) => {
+      const prominenceDelta =
+        b.prominenceHeightFraction -
+        a.prominenceHeightFraction;
+      if (Math.abs(prominenceDelta) > Number.EPSILON) {
+        return prominenceDelta;
+      }
+      return b.sample.heightFraction -
+        a.sample.heightFraction;
+    });
+
+  return matching[0] ?? null;
 }
 
 export function selectThoraxProminencePair(
@@ -365,54 +393,12 @@ export function findThoraxReferenceLandmarks({
     },
   );
 
-  if (pairDetection.selected) {
-    const pair = pairDetection.selected;
-    return {
-      contract: THORAX_REFERENCE_LANDMARKS_CONTRACT,
-      status: "selected",
-      experimental: true,
-      mode: "anterior-prominence-pair",
-      surfaceDirection: direction,
-      bodyCenter,
-      bodyBounds: bounds,
-      appendageMergeBoundary,
-      chest: {
-        status: "selected",
-        sampleIndex: pair.peak.index,
-        heightFraction: pair.peak.heightFraction,
-        planeY: pair.peak.planeY,
-        perimeterUnits: pair.peak.perimeterUnits,
-        directionalSurfaceUnits:
-          pair.peak.directionalSurfaceUnits,
-      },
-      underbust: {
-        status: "selected",
-        selected: {
-          sampleIndex: pair.sample.index,
-          heightFraction: pair.sample.heightFraction,
-          planeY: pair.sample.planeY,
-          perimeterUnits: pair.sample.perimeterUnits,
-          directionalSurfaceUnits:
-            pair.sample.directionalSurfaceUnits,
-          prominenceUnits: pair.prominenceUnits,
-          prominenceHeightFraction:
-            pair.prominenceHeightFraction,
-          peakSeparationHeightFraction:
-            pair.peakSeparationHeightFraction,
-        },
-      },
-      pairCandidates: pairDetection.candidates,
-      samples,
-    };
-  }
+  const chestSample = selectGreatestAnteriorSample(
+    eligible,
+    tieToleranceUnits,
+  );
 
-  const fallback =
-    fallbackFullestThorax(
-      eligible,
-      tieToleranceUnits,
-    );
-
-  if (!fallback) {
+  if (!chestSample) {
     return {
       contract: THORAX_REFERENCE_LANDMARKS_CONTRACT,
       status: "no-valid-slice",
@@ -432,28 +418,59 @@ export function findThoraxReferenceLandmarks({
     };
   }
 
+  const pairedUnderbust =
+    selectUnderbustForChestPeak(
+      pairDetection.candidates,
+      chestSample.index,
+    );
+
   return {
     contract: THORAX_REFERENCE_LANDMARKS_CONTRACT,
     status: "selected",
     experimental: true,
-    mode: "fullest-thorax-fallback",
+    mode: pairedUnderbust
+      ? "anterior-maximum-paired-underbust"
+      : "anterior-maximum-structural-fallback",
     surfaceDirection: direction,
     bodyCenter,
     bodyBounds: bounds,
     appendageMergeBoundary,
     chest: {
       status: "selected",
-      sampleIndex: fallback.index,
-      heightFraction: fallback.heightFraction,
-      planeY: fallback.planeY,
-      perimeterUnits: fallback.perimeterUnits,
+      sampleIndex: chestSample.index,
+      heightFraction: chestSample.heightFraction,
+      planeY: chestSample.planeY,
+      perimeterUnits: chestSample.perimeterUnits,
       directionalSurfaceUnits:
-        fallback.directionalSurfaceUnits,
+        chestSample.directionalSurfaceUnits,
     },
-    underbust: {
-      status: "no-stable-landmark",
-      selected: null,
-    },
+    underbust: pairedUnderbust
+      ? {
+          status: "selected",
+          selected: {
+            sampleIndex: pairedUnderbust.sample.index,
+            heightFraction:
+              pairedUnderbust.sample.heightFraction,
+            planeY: pairedUnderbust.sample.planeY,
+            perimeterUnits:
+              pairedUnderbust.sample.perimeterUnits,
+            directionalSurfaceUnits:
+              pairedUnderbust.sample
+                .directionalSurfaceUnits,
+            prominenceUnits:
+              pairedUnderbust.prominenceUnits,
+            prominenceHeightFraction:
+              pairedUnderbust
+                .prominenceHeightFraction,
+            peakSeparationHeightFraction:
+              pairedUnderbust
+                .peakSeparationHeightFraction,
+          },
+        }
+      : {
+          status: "no-stable-landmark",
+          selected: null,
+        },
     pairCandidates: pairDetection.candidates,
     samples,
   };
