@@ -11,12 +11,14 @@ import {
 } from "./makehuman-adapter.mjs";
 import { solveShoulderBreadthTarget } from "./makehuman-calibration.mjs";
 import {
+  collectTriangleVertexIndices,
+  getObjGroupTriangles,
   parseMakeHumanObj,
   parseMakeHumanTarget,
 } from "./makehuman-geometry.mjs";
 import {
   assertPinnedShoulderLandmarks,
-  measurePositionArrayHeightUnits,
+  measurePositionBoundsUnits,
 } from "./makehuman-measurement.mjs";
 import {
   applyShapePrior,
@@ -69,7 +71,9 @@ scene.add(grid);
 let workingBody;
 let meshRoot;
 let basePositions;
-let currentNativeHeight = null;
+let bodyTriangles;
+let bodyVertexIndices;
+let currentBodyBounds;
 let shapePriorEndpoints;
 let shapePriorRender;
 let shoulderTargetPair;
@@ -102,19 +106,15 @@ function neutralGrayMaterial() {
 }
 
 function fitMeshToCanonicalHeight(targetHeightM) {
-  if (!meshRoot || !currentNativeHeight || currentNativeHeight <= 0) return;
+  if (!meshRoot || !currentBodyBounds || currentBodyBounds.height <= 0) return;
 
-  meshRoot.scale.setScalar(targetHeightM / currentNativeHeight);
-  meshRoot.position.set(0, 0, 0);
-  meshRoot.updateMatrixWorld(true);
-
-  const box = new THREE.Box3().setFromObject(meshRoot);
-  const center = new THREE.Vector3();
-  box.getCenter(center);
-
-  meshRoot.position.x -= center.x;
-  meshRoot.position.z -= center.z;
-  meshRoot.position.y -= box.min.y;
+  const scale = targetHeightM / currentBodyBounds.height;
+  meshRoot.scale.setScalar(scale);
+  meshRoot.position.set(
+    -((currentBodyBounds.minX + currentBodyBounds.maxX) / 2) * scale,
+    -currentBodyBounds.minY * scale,
+    -((currentBodyBounds.minZ + currentBodyBounds.maxZ) / 2) * scale,
+  );
   meshRoot.updateMatrixWorld(true);
 }
 
@@ -214,8 +214,10 @@ function updateMeshPositions(positions) {
     new THREE.Float32BufferAttribute(positions, 3),
   );
   meshRoot.geometry.computeVertexNormals();
-  meshRoot.geometry.computeBoundingBox();
-  currentNativeHeight = measurePositionArrayHeightUnits(positions);
+  currentBodyBounds = measurePositionBoundsUnits(
+    positions,
+    bodyVertexIndices,
+  );
 }
 
 function renderCanonicalBody() {
@@ -255,6 +257,7 @@ function renderCanonicalBody() {
     increaseDeltas: shoulderTargetDeltas.increaseDeltas,
     canonicalHeightCm,
     targetShoulderBreadthCm,
+    heightVertexIndices: bodyVertexIndices,
     toleranceCm: 0.01,
   });
 
@@ -293,7 +296,9 @@ async function loadRealMesh() {
       "position",
       new THREE.Float32BufferAttribute(parsed.positions, 3),
     );
-    geometry.setIndex(new THREE.BufferAttribute(parsed.triangles, 1));
+    bodyTriangles = getObjGroupTriangles(parsed, "body");
+    bodyVertexIndices = collectTriangleVertexIndices(bodyTriangles);
+    geometry.setIndex(new THREE.BufferAttribute(bodyTriangles, 1));
     geometry.computeVertexNormals();
 
     meshRoot = new THREE.Mesh(geometry, neutralGrayMaterial());
@@ -302,9 +307,14 @@ async function loadRealMesh() {
     basePositions = new Float64Array(parsed.positions);
     meshRoot.userData.originalVertexCount = parsed.vertexCount;
     meshRoot.userData.originalTriangleCount = parsed.triangleCount;
+    meshRoot.userData.bodyTriangleCount = bodyTriangles.length / 3;
+    meshRoot.userData.bodyVertexCount = bodyVertexIndices.length;
     meshRoot.userData.originalPositions = basePositions;
 
-    currentNativeHeight = measurePositionArrayHeightUnits(basePositions);
+    currentBodyBounds = measurePositionBoundsUnits(
+      basePositions,
+      bodyVertexIndices,
+    );
     assertPinnedShoulderLandmarks(basePositions);
     scene.add(meshRoot);
 
@@ -322,9 +332,12 @@ async function loadRealMesh() {
         blobSha: MAKEHUMAN_ASSET_MANIFEST.baseMeshBlobSha,
         license: MAKEHUMAN_ASSET_MANIFEST.assetLicense,
         vertexCount: parsed.vertexCount,
-        triangleCount: parsed.triangleCount,
+        totalTriangleCount: parsed.triangleCount,
+        bodyTriangleCount: bodyTriangles.length / 3,
+        bodyVertexCount: bodyVertexIndices.length,
         stableSourceVertexIndices: true,
-        nativeObjHeightUnits: measurePositionArrayHeightUnits(basePositions),
+        anthropometryGroup: "body",
+        nativeBodyHeightUnits: currentBodyBounds.height,
         shapePriorAssets: {
           contract: MAKEHUMAN_SHAPE_PRIOR_TARGETS.contract,
           endpointAssetCount: 3,
