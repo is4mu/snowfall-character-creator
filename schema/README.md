@@ -17,6 +17,7 @@ This directory contains the portable Character Schema contract and fixtures used
 | `examples/full.character.json` | valid | exercises all draft domains |
 | `fixtures/invalid/missing-identity.character.json` | invalid | required `identity` is absent |
 | `fixtures/invalid/personality-out-of-range.character.json` | invalid | personality trait exceeds `1.0` |
+| `fixtures/invalid/personality-missing-trait.character.json` | invalid | canonical personality vector is incomplete |
 | `fixtures/invalid/negative-measurement.character.json` | invalid | physical measurement is negative |
 | `fixtures/invalid/unknown-core-field.character.json` | invalid | strict core object rejects unknown `identity.age` |
 
