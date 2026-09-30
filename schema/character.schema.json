@@ -568,8 +568,7 @@
       "additionalProperties": false,
       "required": [
         "sincerity",
-        "fairness",
-        "statusMotivation"
+        "fairness"
       ],
       "properties": {
         "sincerity": {
@@ -579,36 +578,24 @@
         "fairness": {
           "$ref": "#/$defs/trait01",
           "description": "0 = more willing to exploit unfair opportunities for gain; 1 = strongly avoids cheating, exploitation, and taking unfair advantage."
-        },
-        "statusMotivation": {
-          "$ref": "#/$defs/trait01",
-          "description": "0 = relatively indifferent to prestige, rank, luxury signals, and recognition; 1 = strongly motivated by visible success, prestige, rank, or social recognition."
         }
       },
-      "description": "Stable tendencies around genuineness, fairness, and the motivational pull of social status."
+      "description": "Stable tendencies around genuineness and fairness when dealing with other people."
     },
     "personalityEmotional": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "anxietySensitivity",
+        "anxietyProneness",
         "irritability",
-        "sadnessSensitivity",
+        "sadnessProneness",
         "moodVolatility",
         "recoverySpeed"
       ],
       "properties": {
-        "anxietySensitivity": {
-          "$ref": "#/$defs/trait01",
-          "description": "0 = rarely enters anticipatory worry or threat-focused states; 1 = readily experiences worry, apprehension, and threat sensitivity."
-        },
         "irritability": {
           "$ref": "#/$defs/trait01",
           "description": "0 = slow to become annoyed or angry; 1 = frustration and anger are triggered relatively easily."
-        },
-        "sadnessSensitivity": {
-          "$ref": "#/$defs/trait01",
-          "description": "0 = less prone to sadness after disappointment, rejection, or loss; 1 = strongly affected by disappointment, rejection, or loss."
         },
         "moodVolatility": {
           "$ref": "#/$defs/trait01",
@@ -617,6 +604,14 @@
         "recoverySpeed": {
           "$ref": "#/$defs/trait01",
           "description": "0 = strong emotions tend to linger; 1 = returns toward emotional baseline relatively quickly after an emotional event."
+        },
+        "anxietyProneness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = rarely enters anticipatory worry or threat-focused states; 1 = readily experiences worry, apprehension, and threat-focused anticipation."
+        },
+        "sadnessProneness": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = less prone to sadness after disappointment, rejection, or loss; 1 = strongly affected by disappointment, rejection, or loss."
         }
       },
       "description": "Baseline tendencies in negative affect, emotional variability, and return toward baseline."
@@ -625,11 +620,16 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "statusMotivation",
         "rewardSensitivity",
         "sensationSeeking",
         "emotionalUrgency"
       ],
       "properties": {
+        "statusMotivation": {
+          "$ref": "#/$defs/trait01",
+          "description": "0 = relatively indifferent to prestige, rank, luxury signals, and recognition; 1 = strongly motivated by visible success, prestige, rank, or social recognition."
+        },
         "rewardSensitivity": {
           "$ref": "#/$defs/trait01",
           "description": "0 = immediate rewards, praise, and anticipated pleasure exert a weaker pull; 1 = strongly approaches opportunities associated with reward or positive reinforcement."
@@ -643,7 +643,7 @@
           "description": "0 = usually retains behavioral control during intense emotion; 1 = more likely to act rashly when emotions are very strong, whether positive or negative."
         }
       },
-      "description": "Action-oriented tendencies that shape approach behavior and impulsive responding."
+      "description": "Action-oriented motivational tendencies that shape approach behavior, stimulation seeking, status pursuit, and rash responding under strong emotion."
     },
     "personalityAttachment": {
       "type": "object",
