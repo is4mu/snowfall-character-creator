@@ -479,7 +479,6 @@ export function mapBodyToRenderModel(body) {
       "chestSurfaceDistributionBeyondGrossDepth",
       "abdomenSurfaceDistributionBeyondDepth",
       "gluteSurfaceDistributionBeyondGrossDepth",
-      "posture",
       "leftRightAsymmetry",
       "regionalMuscleDistribution",
     ],
