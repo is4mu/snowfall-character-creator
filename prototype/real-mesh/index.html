@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SCC Real Human Mesh Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">Snowfall Character Creator</p>
+          <h1>Real Human Mesh Prototype</h1>
+          <p>
+            Stage 1 loads a pinned CC0 MakeHuman base mesh and applies only the
+            SCC canonical height. Other body fields remain explicit calibration
+            work rather than hidden approximations.
+          </p>
+        </div>
+        <div class="header-actions">
+          <button id="front-view" type="button">Front</button>
+          <button id="side-view" type="button">Side</button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="panel">
+          <h2>Canonical SCC input</h2>
+
+          <label class="control">
+            <span>Height</span>
+            <div class="control-row">
+              <input id="height" type="range" min="140" max="205" step="1" />
+              <output id="height-value"></output>
+            </div>
+          </label>
+
+          <label class="control">
+            <span>Shape prior</span>
+            <select id="shape-prior">
+              <option value="neutral">neutral</option>
+              <option value="feminine">feminine</option>
+              <option value="masculine">masculine</option>
+            </select>
+          </label>
+
+          <p class="note">
+            Shape prior is shown in the adapter plan but is not yet applied to
+            the mesh in Stage 1. No MakeHuman target morph is applied until the
+            calibration layer exists.
+          </p>
+
+          <h2>Asset status</h2>
+          <pre id="asset-status">Loading pinned CC0 base mesh…</pre>
+        </aside>
+
+        <section class="viewport-wrap">
+          <div id="viewport" aria-label="MakeHuman base mesh preview"></div>
+          <p class="viewport-hint">Drag to orbit · scroll to zoom</p>
+        </section>
+
+        <aside class="panel diagnostics-panel">
+          <h2>Mapping diagnostics</h2>
+          <pre id="diagnostics"></pre>
+
+          <details>
+            <summary>Current SCC body JSON</summary>
+            <pre id="source-json"></pre>
+          </details>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>
