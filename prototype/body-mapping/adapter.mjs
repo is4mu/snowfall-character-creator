@@ -347,12 +347,13 @@ export function mapBodyToRenderModel(body) {
       shapePrior === "feminine" ? 1.23 : shapePrior === "masculine" ? 1.15 : 1.19,
   });
 
-  const abdominalDepthCm =
+  const hasAbdominalDepth =
     Number.isFinite(measurements.abdominalDepthCm) &&
-    measurements.abdominalDepthCm > 0
-      ? measurements.abdominalDepthCm
-      : waist.halfDepthM * 2 * 100 * 1.08;
-  if (!Number.isFinite(measurements.abdominalDepthCm)) {
+    measurements.abdominalDepthCm > 0;
+  const abdominalDepthCm = hasAbdominalDepth
+    ? measurements.abdominalDepthCm
+    : waist.halfDepthM * 2 * 100 * 1.08;
+  if (!hasAbdominalDepth) {
     fallbackFields.push("measurements.abdominalDepthCm");
   }
 
