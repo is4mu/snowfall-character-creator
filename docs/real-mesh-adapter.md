@@ -464,9 +464,9 @@ This keeps shoulder measurement coupled to the canonical character stature rathe
 For the representative 162 cm character, direct analysis of the pinned CC0 target pair gives approximately:
 
 ```text
-signed weight -1.0 -> 33.73 cm
-signed weight  0.0 -> 36.31 cm
-signed weight +1.0 -> 41.07 cm
+signed weight -1.0 -> 34.31 cm
+signed weight  0.0 -> 36.93 cm
+signed weight +1.0 -> 41.78 cm
 ```
 
 The representative `shoulderBreadthCm = 38` is therefore reachable.
@@ -638,9 +638,9 @@ At canonical height 162 cm, the experimental shoulder target can still reach 38 
 
 | shape prior | reachable shoulder breadth |
 | --- | ---: |
-| feminine | ~31.68–39.35 cm |
-| neutral | ~32.37–39.72 cm |
-| masculine | ~32.99–40.04 cm |
+| feminine | ~32.32–40.15 cm |
+| neutral | ~33.05–40.55 cm |
+| masculine | ~33.69–40.88 cm |
 
 The automated synthetic contract additionally verifies that an explicit 38 cm shoulder target re-converges after each shape prior.
 
@@ -672,3 +672,125 @@ renderer output: disposable mesh positions
 ```
 
 It should remain prototype-only until the whole-mesh visual audit is complete.
+
+
+## Stage 6: body-surface group boundary
+
+A structural audit of the pinned MakeHuman OBJ found that it contains much more than the visible human surface.
+
+Pinned structure:
+
+```text
+total source vertices:       19158
+anthropometry group:         body
+body source vertices:        13380
+body source index range:     0..13379
+body source faces:           13378
+body triangulated triangles: 26756
+```
+
+Other OBJ groups include joint markers and helper geometry for eyes, hair, clothing proxies, teeth, tongue, genital helpers, and other authoring infrastructure.
+
+Those groups are useful upstream implementation assets, but they are **not the human anthropometric surface**.
+
+### Bug fixed by this boundary
+
+The first real-mesh prototype preserved source vertex indices but flattened every OBJ group into a single render index.
+
+As a consequence:
+
+- helper/joint geometry could enter the neutral gray preview;
+- helper vertices could affect the mesh bounding box;
+- canonical height normalization could use non-body points;
+- shoulder-breadth centimeters could therefore be normalized by the wrong raw height;
+- future chest/waist/hip cross-sections would intersect non-body geometry.
+
+The pinned base illustrates the error:
+
+```text
+body-only raw height: 16.6589 units
+all-source raw height: 16.9455 units
+```
+
+### Parser contract
+
+The SCC OBJ parser now preserves:
+
+```text
+source vertex order
+source vertex indices
+OBJ group name
+triangles per group
+aggregate triangles
+```
+
+Repeated group names accumulate into one deterministic group entry.
+
+The adapter requires the pinned `body` group.
+
+A missing body group is a hard error.
+
+### Renderer contract
+
+The browser retains the full source position array so CC0 target indices remain valid, but the Three.js index buffer references **body triangles only**.
+
+Therefore:
+
+```text
+target system:
+  full pinned source vertex address space
+
+visible surface:
+  body group only
+
+anthropometric measurement:
+  body group only
+```
+
+This keeps renderer compatibility without letting helper geometry become body data.
+
+### Body-only bounds
+
+SCC derives a unique body vertex set from body-group triangles.
+
+Height, centering, floor placement, and future section measurements use only that vertex set.
+
+The displayed canonical-height transform is computed directly from body-only raw bounds rather than Three.js's full position-attribute bounding box.
+
+### Shoulder calibration correction
+
+Shoulder landmark indices remain the same because they are body vertices.
+
+What changes is centimeter normalization.
+
+At 162 cm on the un-priorized pinned base:
+
+```text
+decrease endpoint ~= 34.31 cm
+base               ~= 36.93 cm
+increase endpoint ~= 41.78 cm
+```
+
+With shape priors applied first:
+
+```text
+feminine  ~= 32.32 .. 40.15 cm
+neutral   ~= 33.05 .. 40.55 cm
+masculine ~= 33.69 .. 40.88 cm
+```
+
+The representative 38 cm target remains reachable in all three cases.
+
+### Future anthropometry rule
+
+Any SCC mesh measurement that represents the human body must explicitly declare its surface set.
+
+For the current MakeHuman adapter:
+
+```text
+anthropometrySurface = OBJ group "body"
+```
+
+No algorithm may silently fall back to all source vertices.
+
+This rule is a prerequisite for the upcoming renderer-independent horizontal cross-section engine for chest, waist, and hip circumference.

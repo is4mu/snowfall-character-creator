@@ -20,29 +20,107 @@ function assertPositionArray(positions) {
   }
 }
 
-export function measurePositionArrayHeightUnits(positions) {
-  assertPositionArray(positions);
+function validateVertexIndex(index, vertexCount) {
+  if (!Number.isInteger(index) || index < 0 || index >= vertexCount) {
+    throw new RangeError(`vertex index out of range: ${index}`);
+  }
+}
 
+export function measurePositionBoundsUnits(
+  positions,
+  vertexIndices = null,
+) {
+  assertPositionArray(positions);
+  const vertexCount = positions.length / 3;
+
+  let minX = Infinity;
+  let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  let measuredCount = 0;
 
-  for (let i = 1; i < positions.length; i += 3) {
-    minY = Math.min(minY, positions[i]);
-    maxY = Math.max(maxY, positions[i]);
+  const visit = (index) => {
+    validateVertexIndex(index, vertexCount);
+    const offset = index * 3;
+    const x = positions[offset];
+    const y = positions[offset + 1];
+    const z = positions[offset + 2];
+
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+    minZ = Math.min(minZ, z);
+    maxZ = Math.max(maxZ, z);
+    measuredCount += 1;
+  };
+
+  if (vertexIndices === null) {
+    for (let index = 0; index < vertexCount; index += 1) {
+      visit(index);
+    }
+  } else {
+    if (
+      !(vertexIndices instanceof Uint32Array) &&
+      !Array.isArray(vertexIndices)
+    ) {
+      throw new TypeError(
+        "vertexIndices must be a Uint32Array, array, or null",
+      );
+    }
+    for (const index of vertexIndices) visit(index);
   }
 
+  if (measuredCount === 0) {
+    throw new TypeError("measurement vertex set must not be empty");
+  }
+
+  const width = maxX - minX;
   const height = maxY - minY;
-  if (!Number.isFinite(height) || height <= 0) {
+  const depth = maxZ - minZ;
+
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    !Number.isFinite(depth)
+  ) {
+    throw new TypeError("mesh position bounds are not finite");
+  }
+
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    minZ,
+    maxZ,
+    width,
+    height,
+    depth,
+    vertexCount: measuredCount,
+  };
+}
+
+export function measurePositionArrayHeightUnits(
+  positions,
+  vertexIndices = null,
+) {
+  const {height} = measurePositionBoundsUnits(
+    positions,
+    vertexIndices,
+  );
+  if (height <= 0) {
     throw new TypeError("mesh position array has no positive height");
   }
   return height;
 }
 
 function readVertex(positions, index) {
+  const vertexCount = positions.length / 3;
+  validateVertexIndex(index, vertexCount);
   const offset = index * 3;
-  if (!Number.isInteger(index) || index < 0 || offset + 2 >= positions.length) {
-    throw new RangeError(`landmark vertex index out of range: ${index}`);
-  }
   return [
     positions[offset],
     positions[offset + 1],
@@ -95,6 +173,7 @@ export function measureShoulderBreadthCm(
   positions,
   canonicalHeightCm,
   landmark = MAKEHUMAN_RENDERER_LANDMARKS.shoulderBreadth,
+  heightVertexIndices = null,
 ) {
   assertPositionArray(positions);
   if (!Number.isFinite(canonicalHeightCm) || canonicalHeightCm <= 0) {
@@ -103,7 +182,10 @@ export function measureShoulderBreadthCm(
 
   const left = readVertex(positions, landmark.leftIndex);
   const right = readVertex(positions, landmark.rightIndex);
-  const rawHeight = measurePositionArrayHeightUnits(positions);
+  const rawHeight = measurePositionArrayHeightUnits(
+    positions,
+    heightVertexIndices,
+  );
   const cmPerRawUnit = canonicalHeightCm / rawHeight;
 
   return Math.abs(right[0] - left[0]) * cmPerRawUnit;
