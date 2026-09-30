@@ -188,3 +188,86 @@ This prototype does not:
 - add display-only offsets.
 
 Source geometry remains immutable.
+
+
+## First pinned comparison and refinement
+
+The first side-by-side pinned run of this prototype was:
+
+```text
+run: 36722902102
+head: 58f107b4b94201ada6b8332faa3ebebf36e3fd8b
+conclusion: success
+```
+
+The initial implementation coupled the chest selection mode to whether a qualifying underbust/chest minimum-to-peak pair existed.
+
+That worked extremely well for feminine morphology:
+
+```text
+feminine / shoulder 39 / 81 weights
+legacy chest jumps: 2
+paired chest jumps: 0
+paired chest fraction: 0.73 at every sample
+underbust status: selected at every sample
+```
+
+The shoulder-38 feminine control was also fully stable.
+
+However, the same binary pair/fallback mode introduced new discontinuities for lower-prominence thorax profiles:
+
+```text
+neutral / shoulder 38:
+  pair -> fallback near weight 0.5
+  chest 0.73 -> 0.75
+  underbust selected -> no-stable-landmark
+
+masculine / shoulder 38:
+  fallback -> pair near weight -0.625
+  chest 0.75 -> 0.725
+
+  pair -> fallback near weight +0.125
+  chest 0.73 -> 0.75
+```
+
+This showed that **chest existence and underbust existence must not be coupled**.
+
+A body can have a meaningful chest reference even when there is no stable underbust landmark.
+
+### Refined rule
+
+The prototype now separates the two decisions.
+
+Chest is always selected from:
+
+```text
+greatest anterior surface coordinate
+within the valid thorax band below appendage merge
+```
+
+Underbust is then evaluated independently as a local minimum that must pair with that selected chest peak.
+
+Therefore:
+
+```text
+chest:
+  always selected from anterior thorax geometry
+
+underbust:
+  selected only when the corresponding lower-boundary cue is stable
+  otherwise no-stable-landmark
+```
+
+Diagnostic modes are now:
+
+```text
+anterior-maximum-paired-underbust
+
+anterior-maximum-structural-fallback
+```
+
+The second mode means that SCC still has a chest reference, but the geometry does not justify a distinct underbust landmark.
+
+Importantly, switching between these diagnostic modes no longer changes the **rule used to select chest**.
+
+This refined version must be rerun against the same pinned sweep before it can replace the legacy finder.
