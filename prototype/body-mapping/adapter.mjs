@@ -299,9 +299,7 @@ export function mapBodyToRenderModel(body) {
   const upperArmLengthM = Math.max(0.12, (armLengthM - handLengthM) * 0.52);
   const forearmLengthM = Math.max(0.11, (armLengthM - handLengthM) * 0.48);
 
-  const limbScale = 0.78 + 0.16 * softTissueScale + 0.16 * muscleScale;
-
-  return {
+    return {
     rendererContract: "scc-procedural-body-render-v0",
     sourceModel: body.model,
     shapePrior,
@@ -323,31 +321,31 @@ export function mapBodyToRenderModel(body) {
       torso: {
         heightM: torsoHeightM,
         chestHalfWidthM: chest.halfWidthM,
-        chestHalfDepthM: chest.halfDepthM * softTissueScale,
+        chestHalfDepthM: chest.halfDepthM,
         waistHalfWidthM: waist.halfWidthM,
-        waistHalfDepthM: waist.halfDepthM * softTissueScale,
+        waistHalfDepthM: waist.halfDepthM,
         hipHalfWidthM: hip.halfWidthM,
-        hipHalfDepthM: hip.halfDepthM * softTissueScale,
+        hipHalfDepthM: hip.halfDepthM,
       },
       pelvis: {
         heightM: pelvisHeightM,
         halfWidthM: hip.halfWidthM,
-        halfDepthM: hip.halfDepthM * softTissueScale,
+        halfDepthM: hip.halfDepthM,
       },
       arms: {
         upperLengthM: upperArmLengthM,
         forearmLengthM,
         handLengthM,
         handBreadthM: cmToM(handBreadthCm),
-        upperRadiusM: circumferenceRadius(upperArmCircumferenceCm, limbScale),
-        forearmRadiusM: circumferenceRadius(forearmCircumferenceCm, limbScale),
+        upperRadiusM: circumferenceRadius(upperArmCircumferenceCm),
+        forearmRadiusM: circumferenceRadius(forearmCircumferenceCm),
         wristRadiusM: circumferenceRadius(wristCircumferenceCm),
       },
       legs: {
         upperLengthM: upperLegLengthM,
         lowerLengthM: lowerLegLengthM,
-        upperRadiusM: circumferenceRadius(thighCircumferenceCm, limbScale),
-        calfRadiusM: circumferenceRadius(calfCircumferenceCm, limbScale),
+        upperRadiusM: circumferenceRadius(thighCircumferenceCm),
+        calfRadiusM: circumferenceRadius(calfCircumferenceCm),
         ankleRadiusM: circumferenceRadius(ankleCircumferenceCm),
         footLengthM: cmToM(footLengthCm),
         footBreadthM: cmToM(footBreadthCm),
