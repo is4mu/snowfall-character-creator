@@ -233,6 +233,18 @@ test("coupled candidate re-solves shoulder and measures chest from immutable pri
   });
 
   assert.equal(baseline.status, "measured");
+  assert.equal(
+    baseline.chest.contract,
+    "scc-thorax-reference-landmarks-v0",
+  );
+  assert.equal(
+    baseline.chest.reference.contract,
+    "scc-thorax-reference-landmarks-v0",
+  );
+  assert.deepEqual(
+    baseline.chest.reference.selected,
+    baseline.chest.landmarks.chest,
+  );
   assert.ok(Math.abs(baseline.measuredValue - 80) < 1e-9);
   assert.equal(expanded.status, "measured");
   assert.ok(Math.abs(expanded.measuredValue - 88) < 1e-9);
