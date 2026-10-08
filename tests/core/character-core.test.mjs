@@ -117,12 +117,12 @@ test("deleting an optional field is immutable and schema-valid", async () => {
   const original = await readJson("schema/examples/full.character.json");
   const edited = deleteCharacterValue(
     original,
-    ["identity", "nickname"],
+    ["identity", "gender"],
   );
 
   assert.notStrictEqual(edited, original);
-  assert.ok("nickname" in original.identity);
-  assert.ok(!("nickname" in edited.identity));
+  assert.ok("gender" in original.identity);
+  assert.ok(!("gender" in edited.identity));
   validator.assertValid(edited);
 });
 
