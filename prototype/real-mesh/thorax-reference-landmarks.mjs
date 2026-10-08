@@ -546,3 +546,75 @@ export function findThoraxReferenceLandmarks({
     samples,
   };
 }
+
+
+export function measureThoraxChestCircumferenceCm({
+  positions,
+  triangles,
+  bodyVertexIndices,
+  canonicalHeightCm,
+  surfaceDirection = {x: 0, z: 1},
+  ...finderOptions
+}) {
+  if (!Number.isFinite(canonicalHeightCm) || canonicalHeightCm <= 0) {
+    throw new TypeError(
+      "canonicalHeightCm must be a finite positive number",
+    );
+  }
+
+  const landmarks = findThoraxReferenceLandmarks({
+    positions,
+    triangles,
+    bodyVertexIndices,
+    surfaceDirection,
+    ...finderOptions,
+  });
+
+  if (
+    landmarks.status !== "selected" ||
+    !landmarks.chest ||
+    !Number.isFinite(landmarks.chest.perimeterUnits)
+  ) {
+    return {
+      contract: THORAX_REFERENCE_LANDMARKS_CONTRACT,
+      status: landmarks.status,
+      experimental: true,
+      circumferenceCm: null,
+      cmPerUnit: null,
+      reference: {
+        ...landmarks,
+        selected: null,
+      },
+      landmarks,
+    };
+  }
+
+  const bodyHeightUnits = landmarks.bodyBounds?.height;
+  if (!Number.isFinite(bodyHeightUnits) || bodyHeightUnits <= 0) {
+    throw new TypeError(
+      "selected thorax reference must include positive bodyBounds.height",
+    );
+  }
+
+  const cmPerUnit = canonicalHeightCm / bodyHeightUnits;
+
+  // Keep a temporary selected alias so existing prototype callers consume the
+  // exact same reference selected by the new thorax contract without silently
+  // retaining the legacy perimeter-max finder.
+  const reference = {
+    ...landmarks,
+    selected: {
+      ...landmarks.chest,
+    },
+  };
+
+  return {
+    contract: THORAX_REFERENCE_LANDMARKS_CONTRACT,
+    status: "measured",
+    experimental: true,
+    circumferenceCm: landmarks.chest.perimeterUnits * cmPerUnit,
+    cmPerUnit,
+    reference,
+    landmarks,
+  };
+}
