@@ -202,16 +202,40 @@ Planned categories:
 
 Tests should avoid coupling to incidental implementation details.
 
-## 11. Technology decisions intentionally deferred
+## 11. Initial implementation architecture
 
-The following remain open until the schema and core requirements are clearer:
+The v0.1 Character Core uses **modern JavaScript ES modules**.
 
-- primary implementation language;
+This decision follows the domain contract rather than changing it:
+
+- the existing browser/3D prototypes are already ESM;
+- the first creator interface is browser-oriented;
+- the same core can execute under Node for hermetic tests and in a future browser bundle;
+- renderer-specific code remains outside `src/core/`;
+- the schema remains the source of truth for persistent character structure.
+
+The initial source boundary is:
+
+```text
+src/
+  core/
+    character.mjs
+    serialization.mjs
+    validation.mjs
+    errors.mjs
+```
+
+Node is the development/test host, not the product architecture. The core must remain usable by a future browser interface without depending on Node filesystem/process APIs.
+
+Runtime validation uses the same JSON Schema contract through a standards-based JSON Schema validator. Python schema-contract tests remain in CI as a second implementation check so JavaScript runtime behavior does not silently diverge from the portable schema.
+
+The following technology decisions remain intentionally deferred:
+
 - web framework;
 - desktop packaging;
-- 3D rendering stack;
+- production 3D rendering stack;
 - state-management library;
-- build system;
+- bundler/build system;
 - monorepo vs package layout.
 
-Technology should follow the domain contract, not define it prematurely.
+No UI framework or renderer may become a dependency of the Character Core merely for implementation convenience.
