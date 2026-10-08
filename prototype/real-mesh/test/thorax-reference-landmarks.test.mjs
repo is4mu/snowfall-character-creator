@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   findThoraxReferenceLandmarks,
+  measureThoraxChestCircumferenceCm,
   selectThoraxProminencePair,
   selectThoraxStructuralPair,
   THORAX_REFERENCE_LANDMARKS_CONTRACT,
@@ -203,5 +204,38 @@ test("does not mutate source positions", () => {
     appendageMergeJumpRatio: 10,
   });
 
+  assert.deepEqual(mesh.positions, before);
+});
+
+
+test("centimeter chest measurement exposes the thorax-selected reference", () => {
+  const mesh = profiledTorsoMesh();
+  const before = new Float64Array(mesh.positions);
+
+  const result = measureThoraxChestCircumferenceCm({
+    ...mesh,
+    canonicalHeightCm: 180,
+    surfaceDirection: {x: 0, z: 1},
+    lowerBodyHeightFraction: 0,
+    upperBodyHeightFraction: 1,
+    sampleCount: 7,
+    appendageMergeJumpRatio: 10,
+    minProminenceHeightFraction: 0.05,
+    minPeakSeparationHeightFraction: 0.1,
+    maxPeakSeparationHeightFraction: 0.6,
+  });
+
+  assert.equal(result.status, "measured");
+  assert.equal(result.contract, THORAX_REFERENCE_LANDMARKS_CONTRACT);
+  assert.equal(result.landmarks.status, "selected");
+  assert.deepEqual(
+    result.reference.selected,
+    result.landmarks.chest,
+  );
+  assert.ok(result.circumferenceCm > 0);
+  assert.equal(
+    result.cmPerUnit,
+    180 / result.landmarks.bodyBounds.height,
+  );
   assert.deepEqual(mesh.positions, before);
 });

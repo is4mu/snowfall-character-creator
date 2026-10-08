@@ -2,7 +2,7 @@
 
 ## Status
 
-Experimental measurement prototype.
+Experimental measurement contract with **chest semantics promoted into the active coupled chest solver**.
 
 Contract:
 
@@ -10,9 +10,9 @@ Contract:
 scc-thorax-reference-landmarks-v0
 ```
 
-This contract is a protocol-aligned replacement candidate for the current independent chest and underbust reference finders.
+The protocol-aligned chest landmark is now the active reference used by coupled chest calibration and the browser's blue measurement contour.
 
-It is **not yet used by the coupled chest solver**.
+The paired underbust result remains experimental and is **not** promoted into an underbust target-weight calibration contract.
 
 ## Why this exists
 
@@ -501,7 +501,7 @@ That is a 0.02 body-height-fraction change and must not be promoted into a produ
 
 ## Promotion decision
 
-The pinned evidence supports promoting the **new chest semantic rule** to the next integration stage:
+The pinned evidence supported promoting the **new chest semantic rule** into active coupled calibration:
 
 ```text
 Chest = protocol-aligned anterior structural peak / anterior fallback
@@ -509,12 +509,15 @@ Chest = protocol-aligned anterior structural peak / anterior fallback
 
 The evidence does **not** support promoting the paired underbust result at the same time.
 
-Therefore the next integration should:
+The active integration now:
 
-1. switch coupled chest calibration to the refined thorax chest reference;
-2. switch the blue browser measurement contour to the same chest reference;
-3. keep underbust experimental and independently guarded;
-4. rerun the 162 / 38 / 88 pinned solve;
-5. repeat manual side-view review before any underbust target-weight solver is introduced.
+1. measures coupled chest candidates from the refined thorax chest reference;
+2. passes that exact reference to the blue browser measurement contour;
+3. keeps underbust experimental and independently guarded.
+
+The remaining gates are:
+
+1. rerun the 162 / 38 / 88 pinned solve against the promoted implementation;
+2. repeat manual front/side/orbit review before any underbust target-weight solver is introduced.
 
 This separation preserves the successful chest fix without overstating underbust confidence.

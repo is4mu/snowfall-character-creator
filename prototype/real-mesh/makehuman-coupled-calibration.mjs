@@ -5,8 +5,8 @@ import {
   solveShoulderBreadthTarget,
 } from "./makehuman-calibration.mjs";
 import {
-  measureChestCircumferenceCm,
-} from "./chest-reference-plane.mjs";
+  measureThoraxChestCircumferenceCm,
+} from "./thorax-reference-landmarks.mjs";
 
 export const COUPLED_CHEST_CALIBRATION_CONTRACT =
   "scc-makehuman-coupled-chest-calibration-v0";
@@ -350,11 +350,12 @@ export function evaluateCoupledChestCandidate({
     };
   }
 
-  const chest = measureChestCircumferenceCm({
+  const chest = measureThoraxChestCircumferenceCm({
     positions: shoulder.positions,
     triangles: bodyTriangles,
     bodyVertexIndices,
     canonicalHeightCm,
+    surfaceDirection: {x: 0, z: 1},
     ...chestFinderOptions,
   });
 
