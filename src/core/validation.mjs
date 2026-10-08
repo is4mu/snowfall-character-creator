@@ -21,6 +21,10 @@ export function createCharacterValidator(schema) {
   const ajv = new Ajv2020({
     allErrors: true,
     strict: true,
+    // Character Schema intentionally uses required-only branches inside anyOf
+    // (for example the color contract). This is valid JSON Schema, but AJV's
+    // strictRequired lint would reject it unless explicitly disabled.
+    strictRequired: false,
   });
   addFormats(ajv);
 
