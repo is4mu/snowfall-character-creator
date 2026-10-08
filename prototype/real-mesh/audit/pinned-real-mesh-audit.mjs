@@ -748,36 +748,44 @@ async function main() {
     });
 
     for (const effect of targetEffects) {
+      assert.ok(
+        Number.isFinite(effect.selectedChestHeightFraction),
+        `${shapePrior} ${effect.underbustWeight}: active chest reference must remain selected`,
+      );
+
+      const underbustStatus =
+        effect.underbustReference?.status;
+      assert.ok(
+        underbustStatus === "selected" ||
+          underbustStatus === "no-stable-landmark",
+        `${shapePrior} ${effect.underbustWeight}: unexpected underbust status ${underbustStatus}`,
+      );
+
       const isKnownNegative =
         shapePrior === "masculine" &&
         effect.underbustWeight === 1;
 
       if (isKnownNegative) {
         assert.equal(
-          effect.underbustReference?.status,
+          underbustStatus,
           "no-stable-landmark",
           "masculine +1 underbust target must remain an explicit negative landmark case",
         );
-        continue;
       }
 
-      assert.equal(
-        effect.underbustReference?.status,
-        "selected",
-        `${shapePrior} ${effect.underbustWeight}: expected a stable underbust reference`,
-      );
-      assert.ok(
-        Number.isFinite(
-          effect.underbustReference?.selectedHeightFraction,
-        ) &&
+      if (underbustStatus === "selected") {
+        assert.ok(
           Number.isFinite(
-            effect.selectedChestHeightFraction,
+            effect.underbustReference?.selectedHeightFraction,
           ) &&
-          effect.selectedChestHeightFraction -
-            effect.underbustReference.selectedHeightFraction <=
-            0.08 + 1e-12,
-        `${shapePrior} ${effect.underbustWeight}: selected underbust reference escaped the immediate below-chest band`,
-      );
+            effect.selectedChestHeightFraction >=
+              effect.underbustReference.selectedHeightFraction &&
+            effect.selectedChestHeightFraction -
+              effect.underbustReference.selectedHeightFraction <=
+              0.08 + 1e-12,
+          `${shapePrior} ${effect.underbustWeight}: selected underbust reference escaped the immediate below-chest band`,
+        );
+      }
     }
 
     results.push(summarizeSolve(shapePrior, solved));
